@@ -1,0 +1,959 @@
+// ============================================
+// Prisma Schema for Ludo Nexus
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum PlayerColor {
+  red
+  green
+  yellow
+  blue
+}
+
+enum GameMode {
+  vs_ai
+  vs_human
+  group
+  private
+  team
+  tournament
+}
+
+enum BotDifficulty {
+  easy
+  medium
+  hard
+}
+
+enum MatchStatus {
+  waiting
+  starting
+  in_progress
+  completed
+  cancelled
+  abandoned
+}
+
+enum RoomStatus {
+  lobby
+  starting
+  in_progress
+  completed
+}
+
+enum TournamentStatus {
+  draft
+  published
+  registration_open
+  registration_closed
+  check_in
+  in_progress
+  completed
+  cancelled
+}
+
+enum FriendStatus {
+  pending
+  accepted
+  blocked
+}
+
+enum FriendRequestStatus {
+  pending
+  accepted
+  declined
+  cancelled
+}
+
+enum ChatConversationType {
+  global
+  match
+  private
+  team
+  support
+}
+
+enum MessageType {
+  text
+  emoji
+  system
+  game_action
+  image
+}
+
+enum TransactionType {
+  deposit
+  withdrawal
+  match
+  tournament
+  bonus
+  refund
+  transfer
+}
+
+enum TransactionStatus {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+  reversed
+}
+
+enum BalanceType {
+  available
+  bonus
+  locked
+  pending
+}
+
+enum LedgerReferenceType {
+  match_entry
+  match_win
+  match_loss
+  match_refund
+  deposit
+  withdrawal
+  bonus
+  promotion
+  referral
+  tournament_prize
+  platform_fee
+  adjustment
+}
+
+enum PaymentMethod {
+  upi
+  card
+  netbanking
+  wallet
+  demo
+  internal
+}
+
+enum WithdrawalStatus {
+  requested
+  under_review
+  approved
+  processing
+  completed
+  rejected
+  reversed
+  cancelled
+}
+
+enum KYCStatus {
+  not_started
+  draft
+  submitted
+  under_review
+  additional_info
+  verified
+  rejected
+  expired
+}
+
+enum KYCDocumentType {
+  passport
+  drivers_license
+  national_id
+  utility_bill
+  bank_statement
+}
+
+enum AdminRole {
+  super_admin
+  admin
+  moderator
+  support
+}
+
+enum FraudAlertType {
+  multiple_accounts
+  suspicious_gameplay
+  wallet_manipulation
+  bot_usage
+  collusion
+  other
+}
+
+enum FraudAlertSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum FraudAlertStatus {
+  open
+  investigating
+  resolved
+  dismissed
+}
+
+// ============================================
+// USER & AUTH MODELS
+// ============================================
+
+model User {
+  id                String    @id @default(uuid())
+  username          String    @unique @db.VarChar(20)
+  email             String    @unique @db.VarChar(255)
+  passwordHash      String    @db.VarChar(255)
+  fullName          String    @db.VarChar(100)
+  country           String    @db.Char(2)
+  mobileNumber      String    @db.VarChar(20)
+  avatarUrl         String?   @db.Text
+  isVerified        Boolean   @default(false)
+  isEmailVerified   Boolean   @default(false)
+  isPhoneVerified   Boolean   @default(false)
+  kycStatus         KYCStatus @default(not_started)
+  level             Int       @default(1)
+  experience        Int       @default(0)
+  totalMatches      Int       @default(0)
+  wins              Int       @default(0)
+  losses            Int       @default(0)
+  referralCode      String    @unique @db.VarChar(20)
+  referredById      String?   @db.VarChar(36)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  referredBy        User?     @relation("Referrals") @fields([referredById]) @references([id])
+  referrals         User[]    @relation("Referrals")
+  sessions          Session[]
+  otps              OTP[]
+  profile           Profile?
+  wallet            Wallet?
+  kyc               KYC?
+  matches           MatchPlayer[]
+  rooms             RoomPlayer[]
+  tournaments       TournamentRegistration[]
+  sentFriendRequests  FriendRequest[] @relation("SentRequests")
+  receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
+  friends           Friend[]  @relation("UserFriends")
+  friendOf          Friend[]  @relation("FriendOf")
+  blockedUsers      BlockedUser[] @relation("BlockedUsers")
+  blockedBy         BlockedUser[] @relation("BlockedBy")
+  chatParticipations ChatParticipant[]
+  sentMessages      ChatMessage[] @relation("SentMessages")
+  transactions      Transaction[]
+  withdrawals       Withdrawal[]
+  ledgerEntries     LedgerEntry[]
+  achievements      UserAchievement[]
+  devices           UserDevice[]
+  fraudAlerts       FraudAlert[] @relation("UserFraudAlerts")
+  assignedFraudAlerts FraudAlert[] @relation("AssignedFraudAlerts")
+
+  @@index([email])
+  @@index([username])
+  @@index([referralCode])
+  @@index([kycStatus])
+  @@map("users")
+}
+
+model Session {
+  id            String   @id @default(uuid())
+  userId        String   @db.VarChar(36)
+  deviceId      String?  @db.VarChar(100)
+  deviceName    String?  @db.VarChar(100)
+  ipAddress     String?  @db.VarChar(45)
+  userAgent     String?  @db.Text
+  refreshToken  String   @unique @db.Text
+  isCurrent     Boolean  @default(false)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  lastActiveAt  DateTime @default(now()) @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String?  @db.VarChar(36)
+  identifier String  @db.VarChar(255) // email or phone
+  code      String   @db.VarChar(6)
+  type      String   @db.VarChar(50) // register, login, reset_password, verify_phone, verify_email
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([identifier, type])
+  @@index([expiresAt])
+  @@map("otps")
+}
+
+model UserDevice {
+  id          String   @id @default(uuid())
+  userId      String   @db.VarChar(36)
+  deviceId    String   @db.VarChar(100)
+  deviceName  String?  @db.VarChar(100)
+  platform    String?  @db.VarChar(50) // ios, android, web
+  fcmToken    String?  @db.Text
+  apnsToken   String?  @db.Text
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@index([fcmToken])
+  @@map("user_devices")
+}
+
+// ============================================
+// PROFILE MODEL
+// ============================================
+
+model Profile {
+  id              String   @id @default(uuid())
+  userId          String   @unique @db.VarChar(36)
+  displayName     String?  @db.VarChar(50)
+  bio             String?  @db.Text
+  language        String   @default("en") @db.VarChar(10)
+  privacySettings Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ============================================
+// KYC MODELS
+// ============================================
+
+model KYC {
+  id              String      @id @default(uuid())
+  userId          String      @unique @db.VarChar(36)
+  status          KYCStatus   @default(not_started)
+  fullName        String?     @db.VarChar(100)
+  dateOfBirth     DateTime?
+  nationality     String?     @db.Char(2)
+  address         Json?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedById    String?     @db.VarChar(36)
+  rejectionReason String?     @db.Text
+  expiresAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy      User?       @relation("KYCReviews") @fields([reviewedById]) @references([id])
+  documents       KYCDocument[]
+
+  @@index([status])
+  @@index([userId])
+  @@map("kyc")
+}
+
+model KYCDocument {
+  id            String           @id @default(uuid())
+  kycId         String           @db.VarChar(36)
+  type          String           @db.VarChar(20) // identity, address, age
+  documentType  KYCDocumentType
+  fileUrl       String           @db.Text
+  status        String           @default("pending") @db.VarChar(20) // pending, approved, rejected
+  reviewedAt    DateTime?
+  reviewedById  String?          @db.VarChar(36)
+  rejectionReason String?        @db.Text
+  createdAt     DateTime         @default(now())
+
+  kyc           KYC              @relation(fields: [kycId], references: [id], onDelete: Cascade)
+
+  @@index([kycId])
+  @@map("kyc_documents")
+}
+
+// ============================================
+// WALLET MODELS
+// ============================================
+
+model Wallet {
+  id          String   @id @default(uuid())
+  userId      String   @unique @db.VarChar(36)
+  available   BigInt   @default(0)
+  bonus       BigInt   @default(0)
+  locked      BigInt   @default(0)
+  pending     BigInt   @default(0)
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  ledgerEntries LedgerEntry[]
+
+  @@map("wallets")
+}
+
+model LedgerEntry {
+  id              String              @id @default(uuid())
+  walletId        String              @db.VarChar(36)
+  userId          String              @db.VarChar(36)
+  type            String              @db.VarChar(10) // credit, debit
+  amount          BigInt              // positive for credit, negative for debit
+  balanceType     BalanceType
+  referenceType   LedgerReferenceType
+  referenceId     String?             @db.VarChar(36)
+  description     String              @db.VarChar(500)
+  runningBalance  BigInt
+  idempotencyKey  String              @unique @db.VarChar(100)
+  createdAt       DateTime            @default(now())
+
+  wallet          Wallet              @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([referenceType, referenceId])
+  @@index([idempotencyKey])
+  @@index([createdAt])
+  @@map("ledger_entries")
+}
+
+model Transaction {
+  id                String            @id @default(uuid())
+  userId            String            @db.VarChar(36)
+  walletId          String            @db.VarChar(36)
+  type              TransactionType
+  status            TransactionStatus @default(pending)
+  amount            BigInt            // positive for credit, negative for debit
+  fee               BigInt            @default(0)
+  netAmount         BigInt
+  balanceType       BalanceType
+  paymentMethod     PaymentMethod?
+  paymentProvider   String?           @db.VarChar(50)
+  paymentReference  String?           @db.VarChar(100)
+  description       String            @db.VarChar(500)
+  metadata          Json?
+  idempotencyKey    String            @unique @db.VarChar(100)
+  processedAt       DateTime?
+  createdAt         DateTime          @default(now())
+
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet            Wallet            @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([type])
+  @@index([status])
+  @@index([idempotencyKey])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+model Withdrawal {
+  id                String             @id @default(uuid())
+  userId            String             @db.VarChar(36)
+  amount            BigInt
+  fee               BigInt
+  netAmount         BigInt
+  destinationMethod String             @db.VarChar(20) // upi, bank_transfer
+  destinationDetails Json
+  status            WithdrawalStatus   @default(requested)
+  reviewedAt        DateTime?
+  reviewedById      String?            @db.VarChar(36)
+  processedAt       DateTime?
+  rejectionReason   String?            @db.Text
+  createdAt         DateTime           @default(now())
+
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy        User?              @relation("WithdrawalReviews") @fields([reviewedById]) @references([id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("withdrawals")
+}
+
+// ============================================
+// GAME MODELS
+// ============================================
+
+model Match {
+  id            String       @id @default(uuid())
+  mode          GameMode
+  roomId        String?      @db.VarChar(36)
+  tournamentId  String?      @db.VarChar(36)
+  entryFee      BigInt       @default(0)
+  prizePool     BigInt       @default(0)
+  platformFee   BigInt       @default(0)
+  status        MatchStatus  @default(waiting)
+  winnerId      String?      @db.VarChar(36)
+  gameState     Json?        // Serialized GameState
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
+
+  players       MatchPlayer[]
+  events        MatchEvent[]
+
+  @@index([mode])
+  @@index([roomId])
+  @@index([tournamentId])
+  @@index([status])
+  @@index([winnerId])
+  @@index([createdAt])
+  @@map("matches")
+}
+
+model MatchPlayer {
+  id            String        @id @default(uuid())
+  matchId       String        @db.VarChar(36)
+  userId        String        @db.VarChar(36)
+  color         PlayerColor
+  isBot         Boolean       @default(false)
+  botDifficulty BotDifficulty?
+  teamId        Int?
+  joinedAt      DateTime      @default(now())
+  leftAt        DateTime?
+  finalRank     Int?
+  coinsWon      BigInt        @default(0)
+  coinsLost     BigInt        @default(0)
+
+  match         Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([matchId])
+  @@index([userId])
+  @@map("match_players")
+}
+
+model MatchEvent {
+  id            String   @id @default(uuid())
+  matchId       String   @db.VarChar(36)
+  sequence      Int
+  type          String   @db.VarChar(50) // dice_roll, move, capture, turn_change, player_join, player_leave, game_end
+  playerId      String?  @db.VarChar(36)
+  data          Json
+  createdAt     DateTime @default(now())
+
+  match         Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, sequence])
+  @@index([matchId])
+  @@index([createdAt])
+  @@map("match_events")
+}
+
+// ============================================
+// ROOM MODELS
+// ============================================
+
+model Room {
+  id            String       @id @default(uuid())
+  code          String       @unique @db.VarChar(6)
+  hostId        String       @db.VarChar(36)
+  name          String?      @db.VarChar(50)
+  isPublic      Boolean      @default(true)
+  passwordHash  String?      @db.Text
+  maxPlayers    Int          @default(4)
+  entryFee      BigInt       @default(0)
+  rules         Json         // GameRules
+  status        RoomStatus   @default(lobby)
+  matchId       String?      @unique @db.VarChar(36)
+  expiresAt     DateTime
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  host          User         @relation("RoomHost") @fields([hostId]) @references([id])
+  players       RoomPlayer[]
+  invites       RoomInvite[]
+  spectators    RoomSpectator[]
+
+  @@index([code])
+  @@index([hostId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("rooms")
+}
+
+model RoomPlayer {
+  id            String        @id @default(uuid())
+  roomId        String        @db.VarChar(36)
+  userId        String        @db.VarChar(36)
+  color         PlayerColor?
+  isHost        Boolean       @default(false)
+  isReady       Boolean       @default(false)
+  isBot         Boolean       @default(false)
+  botDifficulty BotDifficulty?
+  teamId        Int?
+  joinedAt      DateTime      @default(now())
+  leftAt        DateTime?
+
+  room          Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+  @@map("room_players")
+}
+
+model RoomInvite {
+  id            String   @id @default(uuid())
+  roomId        String   @db.VarChar(36)
+  invitedById   String   @db.VarChar(36)
+  invitedUserId String   @db.VarChar(36)
+  status        String   @default("pending") @db.VarChar(20) // pending, accepted, declined, expired
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  invitedBy     User     @relation("SentRoomInvites") @fields([invitedById]) @references([id])
+  invitedUser   User     @relation("ReceivedRoomInvites") @fields([invitedUserId]) @references([id])
+
+  @@index([roomId])
+  @@index([invitedUserId])
+  @@index([status])
+  @@map("room_invites")
+}
+
+model RoomSpectator {
+  id        String   @id @default(uuid())
+  roomId    String   @db.VarChar(36)
+  userId    String   @db.VarChar(36)
+  joinedAt  DateTime @default(now())
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@map("room_spectators")
+}
+
+// ============================================
+// TOURNAMENT MODELS
+// ============================================
+
+model Tournament {
+  id                    String            @id @default(uuid())
+  name                  String            @db.VarChar(100)
+  description           String?           @db.Text
+  mode                  String            @db.VarChar(20) // knockout, scheduled
+  maxParticipants       Int
+  entryFee              BigInt            @default(0)
+  prizeBreakdown        Json              // Array of {rank, percentage, fixedAmount}
+  rules                 Json              // GameRules
+  status                TournamentStatus  @default(draft)
+  registrationOpensAt   DateTime
+  registrationClosesAt  DateTime
+  checkInStartsAt       DateTime?
+  checkInEndsAt         DateTime?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  createdById           String            @db.VarChar(36)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  createdBy             User              @relation("CreatedTournaments") @fields([createdById]) @references([id])
+  registrations         TournamentRegistration[]
+  matches               Match[]
+
+  @@index([status])
+  @@index([registrationOpensAt])
+  @@index([registrationClosesAt])
+  @@index([createdById])
+  @@map("tournaments")
+}
+
+model TournamentRegistration {
+  id              String   @id @default(uuid())
+  tournamentId    String   @db.VarChar(36)
+  userId          String   @db.VarChar(36)
+  registeredAt    DateTime @default(now())
+  checkedIn       Boolean  @default(false)
+  checkedInAt     DateTime?
+  seed            Int?
+  eliminatedAt    DateTime?
+  finalRank       Int?
+  prizeWon        BigInt   @default(0)
+
+  tournament      Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+  @@index([tournamentId])
+  @@index([userId])
+  @@index([seed])
+  @@map("tournament_registrations")
+}
+
+// ============================================
+// FRIEND MODELS
+// ============================================
+
+model Friend {
+  id          String       @id @default(uuid())
+  userId      String       @db.VarChar(36)
+  friendId    String       @db.VarChar(36)
+  status      FriendStatus @default(pending)
+  requestedAt DateTime     @default(now())
+  acceptedAt  DateTime?
+  blockedAt   DateTime?
+  blockedById String?      @db.VarChar(36)
+
+  user        User         @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend      User         @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+  blockedBy   User?        @relation("FriendBlocks") @fields([blockedById]) @references([id])
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+  @@index([status])
+  @@map("friends")
+}
+
+model FriendRequest {
+  id            String                @id @default(uuid())
+  fromUserId    String                @db.VarChar(36)
+  toUserId      String                @db.VarChar(36)
+  status        FriendRequestStatus   @default(pending)
+  message       String?               @db.VarChar(200)
+  createdAt     DateTime              @default(now())
+  respondedAt   DateTime?
+
+  fromUser      User                  @relation("SentRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser        User                  @relation("ReceivedRequests", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([status])
+  @@map("friend_requests")
+}
+
+model BlockedUser {
+  id          String   @id @default(uuid())
+  userId      String   @db.VarChar(36)
+  blockedId   String   @db.VarChar(36)
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  user        User     @relation("BlockedUsers", fields: [userId], references: [id], onDelete: Cascade)
+  blocked     User     @relation("BlockedBy", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedId])
+  @@index([userId])
+  @@index([blockedId])
+  @@map("blocked_users")
+}
+
+// ============================================
+// CHAT MODELS
+// ============================================
+
+model ChatConversation {
+  id          String                 @id @default(uuid())
+  type        ChatConversationType
+  name        String?                @db.VarChar(100)
+  matchId     String?                @unique @db.VarChar(36)
+  teamId      Int?
+  isArchived  Boolean                @default(false)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  participants ChatParticipant[]
+  messages    ChatMessage[]
+
+  @@index([type])
+  @@index([matchId])
+  @@index([teamId])
+  @@index([updatedAt])
+  @@map("chat_conversations")
+}
+
+model ChatParticipant {
+  id              String   @id @default(uuid())
+  conversationId  String   @db.VarChar(36)
+  userId          String   @db.VarChar(36)
+  joinedAt        DateTime @default(now())
+  leftAt          DateTime?
+  isMuted         Boolean  @default(false)
+  unreadCount     Int      @default(0)
+
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([conversationId])
+  @@index([userId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id              String       @id @default(uuid())
+  conversationId  String       @db.VarChar(36)
+  senderId        String       @db.VarChar(36)
+  content         String       @db.Text
+  type            MessageType  @default(text)
+  replyToId       String?      @db.VarChar(36)
+  isEdited        Boolean      @default(false)
+  isDeleted       Boolean      @default(false)
+  deletedAt       DateTime?
+  metadata        Json?
+  sentAt          DateTime     @default(now())
+
+  conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User             @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo         ChatMessage?     @relation("Replies") @fields([replyToId]) @references([id])
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([sentAt])
+  @@index([replyToId])
+  @@map("chat_messages")
+}
+
+// ============================================
+// ACHIEVEMENT MODELS
+// ============================================
+
+model Achievement {
+  id          String   @id @default(uuid())
+  code        String   @unique @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String   @db.VarChar(500)
+  icon        String   @db.VarChar(100)
+  category    String   @db.VarChar(20) // gameplay, social, tournament, streak, special
+  requirement Json     // {type, value}
+  reward      Json     // {type, value, metadata}
+  isSecret    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id             String   @id @default(uuid())
+  userId         String   @db.VarChar(36)
+  achievementId  String   @db.VarChar(36)
+  unlockedAt     DateTime
+  progress       Int      @default(0)
+  isCompleted    Boolean  @default(false)
+
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement    Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@map("user_achievements")
+}
+
+// ============================================
+// ADMIN MODELS
+// ============================================
+
+model AdminUser {
+  id          String      @id @default(uuid())
+  email       String      @unique @db.VarChar(255)
+  username    String      @unique @db.VarChar(50)
+  passwordHash String     @db.VarChar(255)
+  fullName    String      @db.VarChar(100)
+  role        AdminRole
+  permissions String[]
+  isActive    Boolean     @default(true)
+  lastLoginAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  auditLogs   AuditLog[]
+  reviewedKYC KYC[]       @relation("KYCReviews")
+  reviewedWithdrawals Withdrawal[] @relation("WithdrawalReviews")
+  assignedFraudAlerts FraudAlert[] @relation("AssignedFraudAlerts")
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  adminId     String?  @db.VarChar(36)
+  userId      String?  @db.VarChar(36)
+  action      String   @db.VarChar(100)
+  resourceType String  @db.VarChar(50)
+  resourceId  String?  @db.VarChar(100)
+  oldData     Json?
+  newData     Json?
+  ipAddress   String?  @db.VarChar(45)
+  userAgent   String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  admin       AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([adminId])
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model FraudAlert {
+  id            String               @id @default(uuid())
+  userId        String               @db.VarChar(36)
+  type          FraudAlertType
+  severity      FraudAlertSeverity
+  description   String               @db.Text
+  evidence      Json
+  status        FraudAlertStatus     @default(open)
+  assignedToId  String?              @db.VarChar(36)
+  resolvedAt    DateTime?
+  resolvedById  String?              @db.VarChar(36)
+  createdAt     DateTime             @default(now())
+
+  user          User                 @relation("UserFraudAlerts", fields: [userId], references: [id], onDelete: Cascade)
+  assignedTo    AdminUser?           @relation("AssignedFraudAlerts") @fields([assignedToId]) @references([id])
+  resolvedBy    AdminUser?           @relation("ResolvedFraudAlerts") @fields([resolvedById]) @references([id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+  @@map("fraud_alerts")
+}
+
+model GameSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique @db.VarChar(100)
+  value       Json
+  description String   @db.VarChar(500)
+  category    String   @db.VarChar(20) // gameplay, economics, matchmaking, tournament, security, ui
+  isPublic    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+  updatedById String   @db.VarChar(36)
+
+  updatedBy   AdminUser @relation(fields: [updatedById], references: [id])
+
+  @@index([category])
+  @@index([isPublic])
+  @@map("game_settings")
+}
