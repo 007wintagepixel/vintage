@@ -67,7 +67,7 @@ export function useChatMutations() {
 
   const deleteMessage = useMutation({
     mutationFn: (messageId: string) => apiClient.deleteMessage(messageId),
-    onSuccess: (_, messageId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chat', 'messages'] });
     },
   });

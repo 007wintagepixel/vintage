@@ -43,7 +43,8 @@ exports.ForgotPasswordSchema = zod_1.z.object({
     identifier: zod_1.z.string().email(),
 });
 exports.ResetPasswordSchema = zod_1.z.object({
-    token: zod_1.z.string().min(1),
+    token: zod_1.z.string().min(1), // email or phone (identifier)
+    code: zod_1.z.string().length(6).regex(/^\d{6}$/), // 6-digit OTP code
     password: zod_1.z.string().min(8).max(128).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/),
     confirmPassword: zod_1.z.string(),
 }).refine(data => data.password === data.confirmPassword, {

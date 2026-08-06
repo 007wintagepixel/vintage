@@ -70,7 +70,7 @@ export class MatchService {
     if (!match) throw new Error('Match not found');
 
     // Check if user is participant or admin
-    const isParticipant = match.players.some(p => p.userId === userId);
+    const isParticipant = match.players.some((p: any) => p.userId === userId);
     if (!isParticipant) throw new Error('Not authorized');
 
     return match;

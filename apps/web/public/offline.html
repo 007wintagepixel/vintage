@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0C0A09">
+  <title>Offline - Ludo Nexus</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0C0A09;
+      color: #F9FAFB;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      text-align: center;
+      max-width: 400px;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 24px;
+      background: linear-gradient(135deg, #22D3EE, #D946EF);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(217, 70, 239, 0.6); }
+    }
+    .icon svg { width: 40px; height: 40px; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 12px; background: linear-gradient(135deg, #22D3EE, #D946EF); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    p { color: #9CA3AF; margin-bottom: 24px; line-height: 1.6; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4); }
+    .btn:active { transform: translateY(0); }
+    .features {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #1F2937;
+      text-align: left;
+    }
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      color: #9CA3AF;
+      font-size: 0.9rem;
+    }
+    .feature svg { width: 20px; height: 20px; color: #22C55E; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 14.21 3 3 3 0 0 0 21 12.79z"></path>
+        <path d="M12 9v4"></path>
+        <circle cx="12" cy="17" r="1"></circle>
+      </svg>
+    </div>
+    
+    <h1>You're Offline</h1>
+    <p>No internet connection detected. Some features may be limited, but you can still access cached content.</p>
+    
+    <button class="btn" onclick="window.location.reload()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 4v6h-6"></path>
+        <path d="M1 20v-6h6"></path>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+      Try Again
+    </button>
+    
+    <div class="features">
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Cached pages still work offline
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Game moves queue for sync when online
+      </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        Push notifications still deliver
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Auto-retry when online
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

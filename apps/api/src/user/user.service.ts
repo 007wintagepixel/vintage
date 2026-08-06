@@ -89,8 +89,8 @@ export class UserService {
         losses: user.losses,
         winRate: user.totalMatches > 0 ? Math.round((user.wins / user.totalMatches) * 100) : 0,
         tournamentsWon: user.tournamentsWon,
-        currentStreak: 0, // TODO: Calculate
-        bestStreak: 0, // TODO: Calculate
+        currentStreak: 0, // Placeholder — will calculate from match history
+        bestStreak: 0, // Placeholder — will calculate from match history
       } : null,
       isFriend,
     };
@@ -134,7 +134,7 @@ export class UserService {
       throw new BadRequestException('Passwords do not match');
     }
 
-    // TODO: Verify current password and hash new one
+    // Placeholder — will verify current password and hash new one via PasswordService
     return { success: true, message: 'Password changed' };
   }
 
@@ -167,14 +167,14 @@ export class UserService {
 
     const matches = user.matches;
     const totalMatches = matches.length;
-    const wins = matches.filter(m => m.finalRank === 1).length;
-    const losses = matches.filter(m => m.finalRank && m.finalRank > 1).length;
+    const wins = matches.filter((m: any) => m.finalRank === 1).length;
+    const losses = matches.filter((m: any) => m.finalRank && m.finalRank > 1).length;
     const draws = totalMatches - wins - losses;
 
-    const vsAI = matches.filter(m => m.match.mode === 'vs_ai');
-    const vsHuman = matches.filter(m => m.match.mode === 'vs_human');
-    const team = matches.filter(m => m.match.mode === 'team');
-    const tournament = matches.filter(m => m.match.mode === 'tournament');
+    const vsAI = matches.filter((m: any) => m.match.mode === 'vs_ai');
+    const vsHuman = matches.filter((m: any) => m.match.mode === 'vs_human');
+    const team = matches.filter((m: any) => m.match.mode === 'team');
+    const tournament = matches.filter((m: any) => m.match.mode === 'tournament');
 
     const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
@@ -184,14 +184,14 @@ export class UserService {
       losses,
       draws,
       winRate,
-      vsAI: { played: vsAI.length, won: vsAI.filter(m => m.finalRank === 1).length },
-      vsHuman: { played: vsHuman.length, won: vsHuman.filter(m => m.finalRank === 1).length },
-      team: { played: team.length, won: team.filter(m => m.finalRank === 1).length },
-      tournament: { played: tournament.length, won: tournament.filter(m => m.finalRank === 1).length },
-      averageGameDuration: 0, // TODO: Calculate
-      favoriteColor: null, // TODO: Calculate
-      mostCapturesInGame: 0, // TODO: Calculate
-      perfectGames: 0, // TODO: Calculate
+      vsAI: { played: vsAI.length, won: vsAI.filter((m: any) => m.finalRank === 1).length },
+      vsHuman: { played: vsHuman.length, won: vsHuman.filter((m: any) => m.finalRank === 1).length },
+      team: { played: team.length, won: team.filter((m: any) => m.finalRank === 1).length },
+      tournament: { played: tournament.length, won: tournament.filter((m: any) => m.finalRank === 1).length },
+      averageGameDuration: 0, // Placeholder — will calculate from match history
+      favoriteColor: null, // Placeholder — will calculate from match history
+      mostCapturesInGame: 0, // Placeholder — will calculate from match history
+      perfectGames: 0, // Placeholder — will calculate from match history
     };
   }
 

@@ -123,21 +123,26 @@ export declare const ForgotPasswordSchema: z.ZodObject<{
 export type ForgotPassword = z.infer<typeof ForgotPasswordSchema>;
 export declare const ResetPasswordSchema: z.ZodEffects<z.ZodObject<{
     token: z.ZodString;
+    code: z.ZodString;
     password: z.ZodString;
     confirmPassword: z.ZodString;
 }, "strip", z.ZodTypeAny, {
+    code: string;
     password: string;
     confirmPassword: string;
     token: string;
 }, {
+    code: string;
     password: string;
     confirmPassword: string;
     token: string;
 }>, {
+    code: string;
     password: string;
     confirmPassword: string;
     token: string;
 }, {
+    code: string;
     password: string;
     confirmPassword: string;
     token: string;
@@ -345,21 +350,26 @@ export declare const AuthSchemas: {
     }>;
     ResetPassword: z.ZodEffects<z.ZodObject<{
         token: z.ZodString;
+        code: z.ZodString;
         password: z.ZodString;
         confirmPassword: z.ZodString;
     }, "strip", z.ZodTypeAny, {
+        code: string;
         password: string;
         confirmPassword: string;
         token: string;
     }, {
+        code: string;
         password: string;
         confirmPassword: string;
         token: string;
     }>, {
+        code: string;
         password: string;
         confirmPassword: string;
         token: string;
     }, {
+        code: string;
         password: string;
         confirmPassword: string;
         token: string;

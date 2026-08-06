@@ -39,7 +39,7 @@ export class TransactionService {
     ]);
 
     return {
-      data: transactions.map(t => ({
+      data: transactions.map((t: any) => ({
         ...t,
         amount: Number(t.amount),
         fee: Number(t.fee),

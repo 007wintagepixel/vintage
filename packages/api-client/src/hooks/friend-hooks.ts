@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, queryKeys } from '../index';
-import type { SendFriendRequest, FriendAction, UserSearch } from '@ludo-nexus/validation';
+import type { SendFriendRequest, FriendAction } from '@ludo-nexus/validation';
 
 export function useFriendQueries() {
   const friends = (page = 1, limit = 50) => useQuery({

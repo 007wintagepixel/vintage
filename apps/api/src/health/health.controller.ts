@@ -4,7 +4,7 @@
 
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { HealthCheck, HealthCheckService, HealthCheckResult } from '@nestjs/terminus';
+import { HealthCheck, HealthCheckService, HealthCheckResult, HealthIndicatorResult } from '@nestjs/terminus';
 import { PrismaService } from '../prisma/prisma.service';
 
 @ApiTags('Health')
@@ -21,12 +21,12 @@ export class HealthController {
   @HealthCheck()
   async check(): Promise<HealthCheckResult> {
     return this.health.check([
-      async () => ({
+      async (): Promise<HealthIndicatorResult> => ({
         database: await this.checkDatabase(),
-      }),
-      async () => ({
+      } as HealthIndicatorResult),
+      async (): Promise<HealthIndicatorResult> => ({
         memory: this.checkMemory(),
-      }),
+      } as HealthIndicatorResult),
     ]);
   }
 
@@ -36,9 +36,9 @@ export class HealthController {
   @HealthCheck()
   async ready(): Promise<HealthCheckResult> {
     return this.health.check([
-      async () => ({
+      async (): Promise<HealthIndicatorResult> => ({
         database: await this.checkDatabase(),
-      }),
+      } as HealthIndicatorResult),
     ]);
   }
 
@@ -48,18 +48,18 @@ export class HealthController {
   @HealthCheck()
   async live(): Promise<HealthCheckResult> {
     return this.health.check([
-      async () => ({
+      async (): Promise<HealthIndicatorResult> => ({
         memory: this.checkMemory(),
-      }),
+      } as HealthIndicatorResult),
     ]);
   }
 
   private async checkDatabase() {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'up' };
+      return { status: 'up' as const };
     } catch {
-      return { status: 'down' };
+      return { status: 'down' as const };
     }
   }
 
@@ -67,7 +67,7 @@ export class HealthController {
     const used = process.memoryUsage().heapUsed;
     const limit = 1024 * 1024 * 1024; // 1GB
     return {
-      status: used < limit ? 'up' : 'down',
+      status: used < limit ? ('up' as const) : ('down' as const),
       used: `${Math.round(used / 1024 / 1024)} MB`,
       limit: `${Math.round(limit / 1024 / 1024)} MB`,
     };

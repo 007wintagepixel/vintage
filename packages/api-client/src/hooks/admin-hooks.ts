@@ -30,23 +30,23 @@ export function useAdminQueries() {
 
   const matchReplay = (matchId: string) => useQuery({
     queryKey: queryKeys.admin.matchReplay(matchId),
-    queryFn: () => apiClient.getMatchReplay(matchId),
+    queryFn: () => apiClient.getAdminMatchReplay(matchId),
     enabled: !!matchId,
   });
 
   const tournaments = (filters?: any, page = 1, limit = 50) => useQuery({
     queryKey: queryKeys.admin.tournaments(filters, page, limit),
-    queryFn: () => apiClient.getTournaments(filters, page, limit),
+    queryFn: () => apiClient.getAdminTournaments(filters, page, limit),
   });
 
   const transactions = (filters?: any, page = 1, limit = 50) => useQuery({
     queryKey: queryKeys.admin.transactions(filters, page, limit),
-    queryFn: () => apiClient.getTransactions(filters, page, limit),
+    queryFn: () => apiClient.getAdminTransactions(filters, page, limit),
   });
 
   const withdrawals = (filters?: any, page = 1, limit = 50) => useQuery({
     queryKey: queryKeys.admin.withdrawals(filters, page, limit),
-    queryFn: () => apiClient.getWithdrawals(filters, page, limit),
+    queryFn: () => apiClient.getAdminWithdrawals(filters, page, limit),
   });
 
   const pendingKyc = (page = 1, limit = 20) => useQuery({
@@ -95,7 +95,7 @@ export function useAdminMutations() {
   });
 
   const createTournament = useMutation({
-    mutationFn: (data: any) => apiClient.createTournament(data),
+    mutationFn: (data: any) => apiClient.createAdminTournament(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'tournaments'] });
     },

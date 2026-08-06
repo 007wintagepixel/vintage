@@ -4,11 +4,9 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, queryKeys } from '../index';
-import type { CreateMatch, RollDice, MoveToken } from '@ludo-nexus/validation';
+import type { CreateMatch, MoveToken } from '@ludo-nexus/validation';
 
 export function useGameQueries() {
-  const queryClient = useQueryClient();
-
   const getMatch = (matchId: string) => useQuery({
     queryKey: queryKeys.game.match(matchId),
     queryFn: () => apiClient.getMatch(matchId),

@@ -135,7 +135,7 @@ export class AdminService {
     ]);
 
     return {
-      data: users.map(u => {
+      data: users.map((u: any) => {
         const { passwordHash, sessions, otps, devices, fraudAlerts, ...safe } = u;
         return safe;
       }),
@@ -299,7 +299,7 @@ export class AdminService {
     ]);
 
     return {
-      data: transactions.map(t => ({ ...t, amount: Number(t.amount), fee: Number(t.fee), netAmount: Number(t.netAmount) })),
+      data: transactions.map((t: any) => ({ ...t, amount: Number(t.amount), fee: Number(t.fee), netAmount: Number(t.netAmount) })),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }

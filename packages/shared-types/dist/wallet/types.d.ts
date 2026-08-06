@@ -1,6 +1,8 @@
 import { z } from 'zod';
 export declare const BalanceTypeSchema: z.ZodEnum<["available", "bonus", "locked", "pending"]>;
 export type BalanceType = z.infer<typeof BalanceTypeSchema>;
+export declare const LedgerReferenceTypeSchema: z.ZodEnum<["match_entry", "match_win", "match_loss", "match_refund", "deposit", "withdrawal", "bonus", "promotion", "referral", "tournament_prize", "platform_fee", "adjustment"]>;
+export type LedgerReferenceType = z.infer<typeof LedgerReferenceTypeSchema>;
 export declare const WalletBalanceSchema: z.ZodObject<{
     userId: z.ZodString;
     available: z.ZodDefault<z.ZodNumber>;

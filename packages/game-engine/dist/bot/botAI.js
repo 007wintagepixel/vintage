@@ -5,7 +5,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BotAI = exports.HardBot = exports.MediumBot = exports.EasyBot = void 0;
 exports.createBot = createBot;
-const constants_1 = require("./constants");
+const constants_1 = require("../constants");
 // ============================================
 // EASY BOT - Mostly random legal moves
 // ============================================
@@ -41,7 +41,7 @@ class MediumBot {
             return { action: 'roll' };
         }
         // Score each legal move
-        const scoredMoves = legalMoves.map(move => {
+        const scoredMoves = legalMoves.map((move) => {
             const token = player.tokens[move.tokenId];
             let score = 0;
             // High priority: Move token out of home
@@ -86,10 +86,10 @@ class MediumBot {
         if ((0, constants_1.isInHomeLane)(position) || (0, constants_1.isFinished)(position))
             return 0;
         let count = 0;
-        gameState.players.forEach(p => {
+        gameState.players.forEach((p) => {
             if (p.userId === movingPlayerId || !p.isActive)
                 return;
-            p.tokens.forEach(t => {
+            p.tokens.forEach((t) => {
                 if (t.position === position && !t.isFinished && !(0, constants_1.isInHome)(t.position)) {
                     count++;
                 }
@@ -103,11 +103,11 @@ class MediumBot {
         if ((0, constants_1.isInHomeLane)(position) || (0, constants_1.isFinished)(position))
             return 0;
         let danger = 0;
-        gameState.players.forEach(p => {
+        gameState.players.forEach((p) => {
             if (p.userId === player.userId || !p.isActive)
                 return;
             // Check if opponent can capture this position on their next turn
-            p.tokens.forEach(token => {
+            p.tokens.forEach((token) => {
                 if ((0, constants_1.isInHome)(token.position) || (0, constants_1.isFinished)(token.position))
                     return;
                 const relativePos = (0, constants_1.getRelativePosition)(p.color, token.position);
@@ -161,7 +161,7 @@ class HardBot {
             return { action: 'roll' };
         }
         // Evaluate each move with full game state analysis
-        const evaluatedMoves = legalMoves.map(move => {
+        const evaluatedMoves = legalMoves.map((move) => {
             const token = player.tokens[move.tokenId];
             const evaluation = this.evaluateMove(gameState, player, token, move);
             return { ...move, evaluation };
@@ -216,10 +216,10 @@ class HardBot {
             return { immediate: 0, strategic: 0 };
         let immediate = 0;
         let strategic = 0;
-        gameState.players.forEach(p => {
+        gameState.players.forEach((p) => {
             if (p.userId === movingPlayerId || !p.isActive)
                 return;
-            p.tokens.forEach(token => {
+            p.tokens.forEach((token) => {
                 if (token.position === position && !token.isFinished && !(0, constants_1.isInHome)(token.position)) {
                     immediate++;
                     // Strategic: Capturing a token that's far advanced hurts opponent more
@@ -239,10 +239,10 @@ class HardBot {
         if ((0, constants_1.isInHomeLane)(position) || (0, constants_1.isFinished)(position))
             return 0;
         let danger = 0;
-        gameState.players.forEach(p => {
+        gameState.players.forEach((p) => {
             if (p.userId === player.userId || !p.isActive)
                 return;
-            p.tokens.forEach(token => {
+            p.tokens.forEach((token) => {
                 if ((0, constants_1.isInHome)(token.position) || (0, constants_1.isFinished)(token.position))
                     return;
                 const relativePos = (0, constants_1.getRelativePosition)(p.color, token.position);
@@ -260,10 +260,10 @@ class HardBot {
     calculateBlockingValue(gameState, player, position) {
         // Position ourselves to threaten opponent tokens on their next turn
         let blockValue = 0;
-        gameState.players.forEach(p => {
+        gameState.players.forEach((p) => {
             if (p.userId === player.userId || !p.isActive)
                 return;
-            p.tokens.forEach(token => {
+            p.tokens.forEach((token) => {
                 if ((0, constants_1.isInHome)(token.position) || (0, constants_1.isFinished)(token.position))
                     return;
                 const tokenRelative = (0, constants_1.getRelativePosition)(p.color, token.position);
@@ -278,10 +278,9 @@ class HardBot {
         return blockValue;
     }
     evaluateProgression(gameState, player, token, toPosition) {
-        const finishedCount = player.tokens.filter(t => t.isFinished).length;
-        const homeLaneCount = player.tokens.filter(t => (0, constants_1.isInHomeLane)(t.position)).length;
-        const onBoardCount = player.tokens.filter(t => !(0, constants_1.isInHome)(t.position) && !(0, constants_1.isFinished)(t.position) && !(0, constants_1.isInHomeLane)(t.position)).length;
-        const inHomeCount = player.tokens.filter(t => (0, constants_1.isInHome)(t.position)).length;
+        const finishedCount = player.tokens.filter((t) => t.isFinished).length;
+        const homeLaneCount = player.tokens.filter((t) => (0, constants_1.isInHomeLane)(t.position)).length;
+        const onBoardCount = player.tokens.filter((t) => !(0, constants_1.isInHome)(t.position) && !(0, constants_1.isFinished)(t.position) && !(0, constants_1.isInHomeLane)(t.position)).length;
         let score = 0;
         // Early game: Get tokens out of home
         if (finishedCount === 0 && homeLaneCount === 0 && onBoardCount < 2) {

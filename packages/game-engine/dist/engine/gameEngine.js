@@ -4,7 +4,7 @@
 // Pure, deterministic functions for Ludo game logic
 // ============================================
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GameEngine = void 0;
+exports.GameEngineUtils = void 0;
 exports.rollDice = rollDice;
 exports.createDiceRoll = createDiceRoll;
 exports.createInitialGameState = createInitialGameState;
@@ -18,7 +18,7 @@ exports.validateMove = validateMove;
 exports.serializePublicState = serializePublicState;
 exports.restoreGameState = restoreGameState;
 exports.calculateTeamResult = calculateTeamResult;
-const constants_1 = require("./constants");
+const constants_1 = require("../constants");
 const crypto_1 = require("crypto");
 // ============================================
 // DICE ROLL GENERATION (Server-authoritative)
@@ -192,8 +192,11 @@ function moveToken(gameState, tokenId, toPosition) {
     }
     // Check for captures
     const capturedTokens = checkCaptures(gameState, currentPlayer.userId, toPosition);
-    // Update token position
-    const updatedTokens = currentPlayer.tokens.map((t, i) => {
+    // Apply captures to game state (return captured tokens to home)
+    const stateAfterCaptures = applyCaptures(gameState, capturedTokens);
+    // Update token position on the state after captures
+    const currentPlayerAfterCaptures = stateAfterCaptures.players[gameState.currentPlayerIndex];
+    const updatedTokens = currentPlayerAfterCaptures.tokens.map((t, i) => {
         if (i === tokenId) {
             return {
                 ...t,
@@ -204,10 +207,20 @@ function moveToken(gameState, tokenId, toPosition) {
         }
         return t;
     });
-    // Check if player has won (all tokens finished)
+    // Check if player has won (all tokens finished) - use updated tokens
     const playerCompleted = updatedTokens.every(t => t.isFinished);
-    // Check if match is completed
-    const matchCompleted = checkMatchCompletion(gameState, currentPlayer.userId);
+    // Create updated players for match completion check
+    const updatedPlayersForCheck = stateAfterCaptures.players.map((p, i) => {
+        if (i === gameState.currentPlayerIndex) {
+            return {
+                ...p,
+                tokens: updatedTokens,
+            };
+        }
+        return p;
+    });
+    // Check if match is completed - use state with updated tokens
+    const matchCompleted = checkMatchCompletion({ ...stateAfterCaptures, players: updatedPlayersForCheck }, currentPlayer.userId);
     // Determine if extra turn
     const isSix = diceValue === 6;
     const isCapture = capturedTokens.length > 0;
@@ -238,7 +251,7 @@ function moveToken(gameState, tokenId, toPosition) {
         gameStateVersion: gameState.stateVersion,
     };
     // Update player state
-    const updatedPlayers = gameState.players.map((p, i) => {
+    const updatedPlayers = stateAfterCaptures.players.map((p, i) => {
         if (i === gameState.currentPlayerIndex) {
             return {
                 ...p,
@@ -526,7 +539,7 @@ function calculateTeamResult(gameState) {
 // ============================================
 // EXPORTS
 // ============================================
-exports.GameEngine = {
+exports.GameEngineUtils = {
     createInitialGameState,
     getLegalMoves,
     moveToken,

@@ -8,6 +8,22 @@ import { UUIDSchema, TimestampSchema, PaginationSchema } from '../game/types';
 export const BalanceTypeSchema = z.enum(['available', 'bonus', 'locked', 'pending']);
 export type BalanceType = z.infer<typeof BalanceTypeSchema>;
 
+export const LedgerReferenceTypeSchema = z.enum([
+  'match_entry',
+  'match_win',
+  'match_loss',
+  'match_refund',
+  'deposit',
+  'withdrawal',
+  'bonus',
+  'promotion',
+  'referral',
+  'tournament_prize',
+  'platform_fee',
+  'adjustment',
+]);
+export type LedgerReferenceType = z.infer<typeof LedgerReferenceTypeSchema>;
+
 export const WalletBalanceSchema = z.object({
   userId: UUIDSchema,
   available: z.number().int().nonnegative().default(0),
@@ -24,20 +40,7 @@ export const LedgerEntrySchema = z.object({
   type: z.enum(['credit', 'debit']),
   amount: z.number().int(), // positive for credit, negative for debit
   balanceType: BalanceTypeSchema,
-  referenceType: z.enum([
-    'match_entry',
-    'match_win',
-    'match_loss',
-    'match_refund',
-    'deposit',
-    'withdrawal',
-    'bonus',
-    'promotion',
-    'referral',
-    'tournament_prize',
-    'platform_fee',
-    'adjustment',
-  ]),
+  referenceType: LedgerReferenceTypeSchema,
   referenceId: UUIDSchema.nullable(),
   description: z.string().max(500),
   runningBalance: z.number().int(),

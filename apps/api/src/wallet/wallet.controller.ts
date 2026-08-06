@@ -22,7 +22,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
-import { Validation } from '@ludo-nexus/validation';
+import type { TransactionFilter, Deposit, WithdrawalRequest } from '@ludo-nexus/validation';
 
 @ApiTags('Wallet')
 @Controller({ path: 'wallet', version: '1' })
@@ -58,7 +58,7 @@ export class WalletController {
   @ApiResponse({ status: 200, description: 'Transaction history' })
   async getTransactions(
     @CurrentUser('id') userId: string,
-    @Query() filters: Validation['transactionFilter'],
+    @Query() filters: TransactionFilter,
   ) {
     return this.walletService.getTransactions(userId, filters, filters.page, filters.limit);
   }
@@ -97,7 +97,7 @@ export class WalletController {
   @HttpCode(HttpStatus.CREATED)
   async deposit(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['deposit'],
+    @Body() data: Deposit,
   ) {
     const idempotencyKey = `deposit-${userId}-${Date.now()}`;
     
@@ -139,7 +139,7 @@ export class WalletController {
   @HttpCode(HttpStatus.CREATED)
   async withdraw(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['withdrawal'],
+    @Body() data: WithdrawalRequest,
   ) {
     return this.withdrawalService.requestWithdrawal(userId, data);
   }

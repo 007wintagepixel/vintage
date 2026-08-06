@@ -2,30 +2,3 @@
 > @ludo-nexus/game-engine@1.0.0 build /Users/akash/ludo-nexus/packages/game-engine
 > tsc
 
-src/bot/botAI.ts(6,34): error TS2307: Cannot find module './gameEngine' or its corresponding type declarations.
-src/bot/botAI.ts(15,3): error TS6133: 'HOME_LANE_ENTRY' is declared but its value is never read.
-src/bot/botAI.ts(16,3): error TS6133: 'DEFAULT_SAFE_CELLS' is declared but its value is never read.
-src/bot/botAI.ts(17,8): error TS2307: Cannot find module './constants' or its corresponding type declarations.
-src/bot/botAI.ts(62,40): error TS7006: Parameter 'move' implicitly has an 'any' type.
-src/bot/botAI.ts(107,23): error TS7006: Parameter 'a' implicitly has an 'any' type.
-src/bot/botAI.ts(107,26): error TS7006: Parameter 'b' implicitly has an 'any' type.
-src/bot/botAI.ts(204,43): error TS7006: Parameter 'move' implicitly has an 'any' type.
-src/bot/botAI.ts(211,26): error TS7006: Parameter 'a' implicitly has an 'any' type.
-src/bot/botAI.ts(211,29): error TS7006: Parameter 'b' implicitly has an 'any' type.
-src/bot/botAI.ts(359,5): error TS6133: 'gameState' is declared but its value is never read.
-src/bot/botAI.ts(367,11): error TS6133: 'inHomeCount' is declared but its value is never read.
-src/constants.ts(5,39): error TS6196: 'GameState' is declared but never used.
-src/constants.ts(5,50): error TS6196: 'PlayerState' is declared but never used.
-src/constants.ts(5,63): error TS6196: 'TokenState' is declared but never used.
-src/constants.ts(5,75): error TS6196: 'Move' is declared but never used.
-src/constants.ts(5,81): error TS6196: 'DiceRoll' is declared but never used.
-src/engine/gameEngine.ts(14,3): error TS6196: 'MatchStatus' is declared but never used.
-src/engine/gameEngine.ts(31,3): error TS6133: 'getTrackDistance' is declared but its value is never read.
-src/engine/gameEngine.ts(39,3): error TS6133: 'wouldLandOnSafeCell' is declared but its value is never read.
-src/engine/gameEngine.ts(40,8): error TS2307: Cannot find module './constants' or its corresponding type declarations.
-src/engine/gameEngine.ts(97,55): error TS6133: 'index' is declared but its value is never read.
-src/engine/gameEngine.ts(265,9): error TS6133: 'playerCompleted' is declared but its value is never read.
-src/engine/gameEngine.ts(380,38): error TS6133: 'playerIndex' is declared but its value is never read.
-src/engine/gameEngine.ts(588,60): error TS6133: 'viewerId' is declared but its value is never read.
-src/index.ts(6,1): error TS2308: Module './engine/gameEngine' has already exported a member named 'BotAI'. Consider explicitly re-exporting to resolve the ambiguity.
- ELIFECYCLE  Command failed with exit code 2.

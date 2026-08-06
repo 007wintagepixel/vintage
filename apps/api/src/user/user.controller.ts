@@ -23,7 +23,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 
-import { Validation } from '@ludo-nexus/validation';
+import type { UpdateProfile, ChangePassword, KYCSubmission } from '@ludo-nexus/validation';
 
 @ApiTags('User')
 @Controller({ path: 'user', version: '1' })
@@ -59,7 +59,7 @@ export class UserController {
   @ApiResponse({ status: 200, description: 'Profile updated' })
   async updateProfile(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['updateProfile'],
+    @Body() data: UpdateProfile,
   ) {
     return this.userService.updateProfile(userId, data);
   }
@@ -70,7 +70,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async changePassword(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['changePassword'],
+    @Body() data: ChangePassword,
   ) {
     return this.userService.changePassword(userId, data);
   }
@@ -143,7 +143,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async saveKYCDraft(
     @CurrentUser('id') userId: string,
-    @Body() data: Partial<Validation['kycSubmission']>,
+    @Body() data: Partial<KYCSubmission>,
   ) {
     return this.kycService.updateKYCDraft(userId, data);
   }
@@ -154,7 +154,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async submitKYC(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['kycSubmission'],
+    @Body() data: KYCSubmission,
   ) {
     return this.kycService.submitKYC(userId, data);
   }

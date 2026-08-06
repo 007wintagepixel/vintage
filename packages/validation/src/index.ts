@@ -379,7 +379,7 @@ export function validateBody<T extends z.ZodTypeAny>(schema: T) {
   return (data: unknown) => {
     const result = schema.safeParse(data);
     if (!result.success) {
-      const errors = result.error.errors.map(e => ({
+      const errors = result.error.errors.map((e: z.ZodIssue) => ({
         field: e.path.join('.'),
         message: e.message,
       }));
@@ -393,7 +393,7 @@ export function validateQuery<T extends z.ZodTypeAny>(schema: T) {
   return (data: unknown) => {
     const result = schema.safeParse(data);
     if (!result.success) {
-      const errors = result.error.errors.map(e => ({
+      const errors = result.error.errors.map((e: z.ZodIssue) => ({
         field: e.path.join('.'),
         message: e.message,
       }));
@@ -407,7 +407,7 @@ export function validateParams<T extends z.ZodTypeAny>(schema: T) {
   return (data: unknown) => {
     const result = schema.safeParse(data);
     if (!result.success) {
-      const errors = result.error.errors.map(e => ({
+      const errors = result.error.errors.map((e: z.ZodIssue) => ({
         field: e.path.join('.'),
         message: e.message,
       }));

@@ -1,12 +1,26 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WalletSchemas = exports.MatchEconomicsConfigSchema = exports.GameEconomicsSchema = exports.WithdrawalSchema = exports.WithdrawalRequestSchema = exports.DepositRequestSchema = exports.TransactionSchema = exports.LedgerEntrySchema = exports.WalletBalanceSchema = exports.BalanceTypeSchema = void 0;
+exports.WalletSchemas = exports.MatchEconomicsConfigSchema = exports.GameEconomicsSchema = exports.WithdrawalSchema = exports.WithdrawalRequestSchema = exports.DepositRequestSchema = exports.TransactionSchema = exports.LedgerEntrySchema = exports.WalletBalanceSchema = exports.LedgerReferenceTypeSchema = exports.BalanceTypeSchema = void 0;
 const zod_1 = require("zod");
 const types_1 = require("../game/types");
 // ============================================
 // WALLET TYPES
 // ============================================
 exports.BalanceTypeSchema = zod_1.z.enum(['available', 'bonus', 'locked', 'pending']);
+exports.LedgerReferenceTypeSchema = zod_1.z.enum([
+    'match_entry',
+    'match_win',
+    'match_loss',
+    'match_refund',
+    'deposit',
+    'withdrawal',
+    'bonus',
+    'promotion',
+    'referral',
+    'tournament_prize',
+    'platform_fee',
+    'adjustment',
+]);
 exports.WalletBalanceSchema = zod_1.z.object({
     userId: types_1.UUIDSchema,
     available: zod_1.z.number().int().nonnegative().default(0),
@@ -21,20 +35,7 @@ exports.LedgerEntrySchema = zod_1.z.object({
     type: zod_1.z.enum(['credit', 'debit']),
     amount: zod_1.z.number().int(), // positive for credit, negative for debit
     balanceType: exports.BalanceTypeSchema,
-    referenceType: zod_1.z.enum([
-        'match_entry',
-        'match_win',
-        'match_loss',
-        'match_refund',
-        'deposit',
-        'withdrawal',
-        'bonus',
-        'promotion',
-        'referral',
-        'tournament_prize',
-        'platform_fee',
-        'adjustment',
-    ]),
+    referenceType: exports.LedgerReferenceTypeSchema,
     referenceId: types_1.UUIDSchema.nullable(),
     description: zod_1.z.string().max(500),
     runningBalance: zod_1.z.number().int(),

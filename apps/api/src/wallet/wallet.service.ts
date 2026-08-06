@@ -51,11 +51,11 @@ export class WalletService {
   }
 
   async addDemoCoins(userId: string, amount: number, description: string, referenceId?: string) {
-    return this.ledgerService.credit(userId, amount, 'available', 'bonus', referenceId, description);
+    return this.ledgerService.credit(userId, amount, 'available', 'bonus', referenceId ?? null, description);
   }
 
   async deductDemoCoins(userId: string, amount: number, description: string, referenceId?: string) {
-    return this.ledgerService.debit(userId, amount, 'available', 'bonus', referenceId, description);
+    return this.ledgerService.debit(userId, amount, 'available', 'bonus', referenceId ?? null, description);
   }
 
   async lockFunds(userId: string, amount: number, referenceId: string, description: string) {

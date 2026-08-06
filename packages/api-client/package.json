@@ -15,6 +15,7 @@
     "@ludo-nexus/shared-types": "workspace:*",
     "@ludo-nexus/validation": "workspace:*",
     "@tanstack/react-query": "^5.24.0",
+    "axios": "^1.7.0",
     "socket.io-client": "^4.7.4",
     "zod": "^3.23.0"
   },

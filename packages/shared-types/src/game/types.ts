@@ -28,6 +28,15 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
       totalPages: z.number(),
     }),
   });
+export type PaginatedResponse<T> = {
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
 // ============================================
 // GAME TYPES

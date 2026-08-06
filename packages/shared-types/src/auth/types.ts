@@ -52,7 +52,8 @@ export const ForgotPasswordSchema = z.object({
 export type ForgotPassword = z.infer<typeof ForgotPasswordSchema>;
 
 export const ResetPasswordSchema = z.object({
-  token: z.string().min(1),
+  token: z.string().min(1), // email or phone (identifier)
+  code: z.string().length(6).regex(/^\d{6}$/), // 6-digit OTP code
   password: z.string().min(8).max(128).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/),
   confirmPassword: z.string(),
 }).refine(data => data.password === data.confirmPassword, {

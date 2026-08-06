@@ -315,9 +315,8 @@ export class AuthService {
   // ============================================
 
   async oauthLogin(provider: 'google' | 'apple', idToken: string, deviceId?: string, deviceName?: string) {
-    // TODO: Implement Google/Apple OAuth verification
-    // For now, throw not implemented
-    throw new BadRequestException(`${provider} OAuth not yet implemented`);
+    // OAuth not yet configured. Set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID in env.
+    throw new Error('OAuth not yet configured. Set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID in env.');
   }
 
   // ============================================
@@ -348,5 +347,40 @@ export class AuthService {
     return this.prisma.user.findUnique({
       where: { referralCode: code },
     });
+  }
+
+  // Validate user credentials (for local strategy)
+  async validateUser(identifier: string, password: string) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { username: identifier },
+        ],
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    const isValid = await this.passwordService.verify(user.passwordHash, password);
+    if (!isValid) {
+      return null;
+    }
+
+    if (user.deletedAt) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      isVerified: user.isVerified,
+      isEmailVerified: user.isEmailVerified,
+      isPhoneVerified: user.isPhoneVerified,
+      kycStatus: user.kycStatus,
+    };
   }
 }

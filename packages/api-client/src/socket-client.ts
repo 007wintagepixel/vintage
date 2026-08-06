@@ -3,7 +3,6 @@
 // ============================================
 
 import { io, Socket } from 'socket.io-client';
-import type { WSEvent, WSEventType } from '@ludo-nexus/shared-types';
 
 type EventHandler = (data: any) => void;
 

@@ -1,4 +1,4 @@
-import type { GameRules, PlayerColor } from '@ludo-nexus/shared-types';
+import type { GameRules, PlayerColor, GameState } from '@ludo-nexus/shared-types';
 export declare const BOARD_SIZE = 52;
 export declare const HOME_LANE_LENGTH = 4;
 export declare const FINISHED_POSITION = 56;
@@ -73,4 +73,12 @@ export declare function getHomeLanePosition(color: PlayerColor, relativePosition
  * Check if a move would land on a safe cell
  */
 export declare function wouldLandOnSafeCell(color: PlayerColor, currentRelativePos: number, diceValue: number, safeCells?: number[]): boolean;
+/**
+ * Get legal moves for a player
+ */
+export declare function getLegalMoves(gameState: GameState): Array<{
+    tokenId: number;
+    fromPosition: number;
+    toPosition: number;
+}>;
 //# sourceMappingURL=constants.d.ts.map

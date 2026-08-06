@@ -55,6 +55,15 @@ export declare const PaginatedResponseSchema: <T extends z.ZodTypeAny>(itemSchem
         totalPages: number;
     };
 }>;
+export type PaginatedResponse<T> = {
+    data: T[];
+    meta: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+};
 export declare const PlayerColorSchema: z.ZodEnum<["red", "green", "yellow", "blue"]>;
 export type PlayerColor = z.infer<typeof PlayerColorSchema>;
 export declare const GameModeSchema: z.ZodEnum<["vs_ai", "vs_human", "group", "private", "team", "tournament"]>;

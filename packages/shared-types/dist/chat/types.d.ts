@@ -166,6 +166,17 @@ export declare const CreateConversationSchema: z.ZodObject<{
     initialMessage?: string | undefined;
 }>;
 export type CreateConversation = z.infer<typeof CreateConversationSchema>;
+export declare const MessageQuerySchema: z.ZodObject<{
+    before: z.ZodOptional<z.ZodString>;
+    limit: z.ZodDefault<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit: number;
+    before?: string | undefined;
+}, {
+    limit?: number | undefined;
+    before?: string | undefined;
+}>;
+export type MessageQuery = z.infer<typeof MessageQuerySchema>;
 export declare const ChatSchemas: {
     ChatConversation: z.ZodObject<{
         id: z.ZodString;

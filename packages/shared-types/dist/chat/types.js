@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ChatSchemas = exports.CreateConversationSchema = exports.SendMessageSchema = exports.ChatMessageSchema = exports.ChatConversationSchema = exports.ChatConversationTypeSchema = void 0;
+exports.ChatSchemas = exports.MessageQuerySchema = exports.CreateConversationSchema = exports.SendMessageSchema = exports.ChatMessageSchema = exports.ChatConversationSchema = exports.ChatConversationTypeSchema = void 0;
 const zod_1 = require("zod");
 const types_1 = require("../game/types");
 // ============================================
@@ -55,6 +55,10 @@ exports.CreateConversationSchema = zod_1.z.object({
     participantIds: zod_1.z.array(types_1.UUIDSchema).min(1).max(50),
     teamId: zod_1.z.number().int().optional(),
     initialMessage: zod_1.z.string().max(2000).optional(),
+});
+exports.MessageQuerySchema = zod_1.z.object({
+    before: zod_1.z.string().datetime().optional(),
+    limit: zod_1.z.coerce.number().int().positive().max(100).default(50),
 });
 // ============================================
 // EXPORTS

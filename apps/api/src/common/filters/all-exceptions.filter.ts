@@ -13,7 +13,7 @@ import {
 import { Request, Response } from 'express';
 import { ValidationError as ClassValidationError } from 'class-validator';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError, PrismaClientValidationError } from '@prisma/client/runtime/library';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -64,11 +64,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       details = {
         errors: exception.flatMap(e => this.formatValidationErrors(e)),
       };
-    } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+    } else if (exception instanceof PrismaClientKnownRequestError) {
       status = HttpStatus.CONFLICT;
       errorCode = 'DATABASE_ERROR';
       message = this.handlePrismaError(exception);
-    } else if (exception instanceof Prisma.PrismaClientValidationError) {
+    } else if (exception instanceof PrismaClientValidationError) {
       status = HttpStatus.BAD_REQUEST;
       errorCode = 'DATABASE_VALIDATION_ERROR';
       message = 'Invalid database operation';
@@ -120,7 +120,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return errors;
   }
 
-  private handlePrismaError(error: Prisma.PrismaClientKnownRequestError): string {
+  private handlePrismaError(error: PrismaClientKnownRequestError): string {
     switch (error.code) {
       case 'P2002':
         const target = error.meta?.target as string[] | undefined;

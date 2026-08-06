@@ -140,6 +140,7 @@ This implementation plan covers building a complete, production-quality Ludo Nex
 | TASK-042 | Create global styles, CSS variables for theming, dark mode | | |
 | TASK-043 | Build UI component library (Button, Card, Input, Modal, Toast, Dice, Token, Board) | | |
 | TASK-044 | Implement layout components (Navbar, BottomNav, Sidebar, PlayerCard) | | |
+| TASK-044a | **Extract Game Page Components** - Split 39KB game page into Board, Token, Dice, PlayerHand, Sidebar, Chat, DiceRoll components | | |
 | TASK-045 | Implement Auth pages (/, /login, /register, /verify-otp, /forgot-password, /reset-password) | | |
 | TASK-046 | Implement public pages (/terms, /privacy, /responsible-gaming, /help) | | |
 | TASK-047 | Implement Home dashboard (/home) with player card, mode cards, bottom nav | | |
@@ -147,8 +148,11 @@ This implementation plan covers building a complete, production-quality Ludo Nex
 | TASK-049 | Implement Matchmaking page (/matchmaking) with queue, cancel, ETA | | |
 | TASK-050 | Implement Room pages (/room/create, /room/join, /room/[roomCode]) | | |
 | TASK-051 | Implement Game page (/game/[matchId]) with full Ludo board UI | | |
+| TASK-051a | **Add Error Boundaries** - Add React error boundaries for game crash protection | | |
 | TASK-052 | Implement Ludo board component (responsive, animations, legal moves, dice) | | |
+| TASK-052a | **Improve Reconnection UX** - Visual feedback during reconnection, state sync indicators | | |
 | TASK-053 | Implement Play vs AI page with difficulty selection | | |
+| TASK-053a | **Expose Bot Difficulty Weights** - Configurable weights for tuning bot difficulties | | |
 | TASK-054 | Implement Friends pages (/friends, requests, sent, blocked) | | |
 | TASK-055 | Implement Chat pages (/chat, /chat/[conversationId]) | | |
 | TASK-056 | Implement Wallet pages (/wallet, /wallet/deposit, /wallet/withdraw, /wallet/transactions) | | |
@@ -195,6 +199,7 @@ This implementation plan covers building a complete, production-quality Ludo Nex
 | TASK-090 | Add platform deep linking (Android App Links, iOS Universal Links) | | |
 | TASK-091 | Write unit tests (flutter_test) | | |
 | TASK-092 | Write integration tests (integration_test) | | |
+| TASK-092a | **Build Expo App for Stores** - Generate production builds for iOS/Android app stores | | |
 
 ### Implementation Phase 5: Admin Panel
 
@@ -214,6 +219,7 @@ This implementation plan covers building a complete, production-quality Ludo Nex
 | TASK-102 | Implement fraud alerts dashboard | | |
 | TASK-103 | Implement game settings configuration | | |
 | TASK-104 | Implement audit logs viewer | | |
+| TASK-104a | **Build Admin Dashboard** - Deploy admin panel to production | | |
 
 ### Implementation Phase 6: Game Engine Polish & Testing
 
@@ -228,6 +234,8 @@ This implementation plan covers building a complete, production-quality Ludo Nex
 | TASK-109 | Add spectator mode | | |
 | TASK-110 | Load test WebSocket connections | | |
 | TASK-111 | Security audit (penetration test game logic) | | |
+| TASK-111a | **Error Boundaries Testing** - Test React error boundaries for game crash scenarios | | |
+| TASK-111b | **Bot Difficulty Config Testing** - Test configurable bot difficulty weights | | |
 
 ### Implementation Phase 7: Demo Mode & Deployment Prep
 

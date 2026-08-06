@@ -112,7 +112,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @HttpCode(HttpStatus.OK)
   async logout(
-    @Req() req: Request,
+    @Req() req: Request & { user: { id: string } },
     @Body() data: { allDevices?: boolean; sessionId?: string },
   ) {
     const userId = req.user.id;
@@ -125,7 +125,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get active sessions' })
   @ApiResponse({ status: 200, description: 'List of active sessions' })
   async getSessions(@Req() req: Request) {
-    // TODO: Implement session listing
+    // Session listing will be implemented with session service
     return { data: [] };
   }
 

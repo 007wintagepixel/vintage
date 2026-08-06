@@ -86,7 +86,7 @@ export class RoomGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!userId) return { error: 'Not authenticated' };
 
       const room = await this.roomService.getRoom(data.roomId);
-      const isParticipant = room.players.some(p => p.userId === userId);
+      const isParticipant = room.players.some((p: any) => p.userId === userId);
       if (!isParticipant) return { error: 'Not a participant' };
 
       client.join(`room:${data.roomId}`);

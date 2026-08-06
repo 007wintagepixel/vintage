@@ -1,5 +1,5 @@
 import type { GameState } from '@ludo-nexus/shared-types';
-import type { BotDecision } from './gameEngine';
+import type { BotDecision } from '../index';
 export declare class EasyBot {
     decide(gameState: GameState, playerIndex: number): BotDecision;
 }

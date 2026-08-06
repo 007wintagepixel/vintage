@@ -1,6 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
+  images: {
+    unoptimized: true,
+    domains: ['localhost', 'lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
+  },
   transpilePackages: [
     '@ludo-nexus/shared-types',
     '@ludo-nexus/validation',
@@ -9,15 +20,6 @@ const nextConfig = {
   ],
   experimental: {
     optimizePackageImports: ['lucide-react'],
-  },
-  images: {
-    domains: ['localhost', 'lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
   },
   async headers() {
     return [
@@ -32,6 +34,20 @@ const nextConfig = {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
+        ],
+      },
+      // Service Worker caching headers
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+      {
+        source: '/manifest.json',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
     ];

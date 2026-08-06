@@ -20,6 +20,7 @@ import { RoomService } from './room.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+import { z } from 'zod';
 import { Validation } from '@ludo-nexus/validation';
 
 @ApiTags('Room')
@@ -35,7 +36,7 @@ export class RoomController {
   @HttpCode(HttpStatus.CREATED)
   async createRoom(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['createRoom'],
+    @Body() data: z.infer<typeof Validation['createRoom']>,
   ) {
     return this.roomService.createRoom(userId, data);
   }
@@ -62,7 +63,7 @@ export class RoomController {
   @HttpCode(HttpStatus.OK)
   async joinRoom(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['joinRoom'],
+    @Body() data: z.infer<typeof Validation['joinRoom']>,
   ) {
     return this.roomService.joinRoom(userId, data);
   }
@@ -95,7 +96,7 @@ export class RoomController {
   @HttpCode(HttpStatus.OK)
   async performAction(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['roomAction'],
+    @Body() data: z.infer<typeof Validation['roomAction']>,
   ) {
     return this.roomService.performAction(userId, data);
   }

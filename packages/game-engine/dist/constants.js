@@ -19,6 +19,7 @@ exports.canEnterBoard = canEnterBoard;
 exports.canEnterHomeLane = canEnterHomeLane;
 exports.getHomeLanePosition = getHomeLanePosition;
 exports.wouldLandOnSafeCell = wouldLandOnSafeCell;
+exports.getLegalMoves = getLegalMoves;
 // ============================================
 // BOARD CONSTANTS
 // ============================================
@@ -86,7 +87,7 @@ function getPreviousPlayerIndex(currentIndex, playerCount = 4) {
  * Check if a position is a safe cell
  */
 function isSafeCell(position, safeCells = exports.DEFAULT_SAFE_CELLS) {
-    return safeCells.includes(position);
+    return safeCells.indexOf(position) !== -1;
 }
 /**
  * Check if a position is in home lane
@@ -199,4 +200,77 @@ function wouldLandOnSafeCell(color, currentRelativePos, diceValue, safeCells = e
     const newRelativePos = currentRelativePos + diceValue;
     const absolutePos = getAbsolutePosition(color, newRelativePos);
     return isSafeCell(absolutePos, safeCells);
+}
+/**
+ * Get legal moves for a player
+ */
+function getLegalMoves(gameState) {
+    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    const diceValue = gameState.diceRoll?.value ?? 0;
+    const legalMoves = [];
+    if (diceValue === 0) {
+        return legalMoves;
+    }
+    currentPlayer.tokens.forEach((token, tokenId) => {
+        const fromPosition = token.position;
+        let toPosition = fromPosition;
+        let isValid = false;
+        if (isInHome(fromPosition)) {
+            // Token in home - can only enter on entry roll
+            if (canEnterBoard(diceValue, gameState.rules.entryRoll)) {
+                toPosition = exports.START_POSITIONS[currentPlayer.color];
+                isValid = true;
+            }
+        }
+        else if (isFinished(fromPosition)) {
+            // Token already finished - cannot move
+            isValid = false;
+        }
+        else if (isInHomeLane(fromPosition)) {
+            // Token in home lane
+            const stepsToFinish = exports.FINISHED_POSITION - fromPosition;
+            if (diceValue === stepsToFinish) {
+                toPosition = exports.FINISHED_POSITION;
+                isValid = true;
+            }
+            else if (diceValue < stepsToFinish) {
+                toPosition = fromPosition + diceValue;
+                isValid = true;
+            }
+            // diceValue > stepsToFinish: invalid (exact roll required)
+        }
+        else {
+            // Token on main track
+            const relativePos = getRelativePosition(currentPlayer.color, fromPosition);
+            if (canEnterHomeLane(currentPlayer.color, relativePos, diceValue)) {
+                // Can enter home lane
+                toPosition = getHomeLanePosition(currentPlayer.color, relativePos, diceValue);
+                isValid = true;
+            }
+            else {
+                // Move on main track
+                const newRelativePos = relativePos + diceValue;
+                if (newRelativePos < exports.BOARD_SIZE) {
+                    toPosition = getAbsolutePosition(currentPlayer.color, newRelativePos);
+                    isValid = true;
+                }
+                // If newRelativePos >= BOARD_SIZE, would overshoot - invalid
+            }
+        }
+        // Additional validation: check if destination is occupied by own token (blockade)
+        if (isValid && gameState.rules.allowBlockades) {
+            const ownTokenAtDest = currentPlayer.tokens.some((t, i) => i !== tokenId && t.position === toPosition && !isFinished(t.position));
+            if (ownTokenAtDest) {
+                isValid = false;
+            }
+        }
+        if (isValid) {
+            legalMoves.push({
+                tokenId,
+                fromPosition,
+                toPosition,
+            });
+        }
+    });
+    return legalMoves;
 }

@@ -1,0 +1,473 @@
+name: Ludo Nexus CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+  PNPM_VERSION: '9.x'
+
+jobs:
+  # ============================================
+  # Lint & Typecheck
+  # ============================================
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm run lint
+
+      - name: Run typecheck
+        run: pnpm run typecheck
+
+  # ============================================
+  # Test (Web)
+  # ============================================
+  test-web:
+    name: Test Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests
+        run: pnpm --filter @ludo-nexus/web run test
+
+      - name: Run coverage
+        run: pnpm --filter @ludo-nexus/web run test:cov
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./apps/web/coverage/lcov.info
+          flags: web
+
+  # ============================================
+  # Test (API)
+  # ============================================
+  test-api:
+    name: Test API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ludo_nexus_test
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ludo-nexus/api run db:generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ludo_nexus_test
+
+      - name: Run migrations
+        run: pnpm --filter @ludo-nexus/api run db:migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ludo_nexus_test
+
+      - name: Run unit tests
+        run: pnpm --filter @ludo-nexus/api run test
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ludo_nexus_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Run coverage
+        run: pnpm --filter @ludo-nexus/api run test:cov
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ludo_nexus_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./apps/api/coverage/lcov.info
+          flags: api
+
+  # ============================================
+  # Test (Game Engine)
+  # ============================================
+  test-game-engine:
+    name: Test Game Engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run game engine tests
+        run: pnpm --filter @ludo-nexus/game-engine run test
+
+      - name: Run coverage
+        run: pnpm --filter @ludo-nexus/game-engine run test:cov
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./packages/game-engine/coverage/lcov.info
+          flags: game-engine
+
+  # ============================================
+  # Build Web
+  # ============================================
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test-web, test-game-engine]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web app
+        run: pnpm --filter @ludo-nexus/web run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: apps/web/.next/
+          retention-days: 7
+
+      - name: Build Capacitor sync
+        run: |
+          cd apps/web
+          pnpm exec cap sync
+
+      - name: Upload Capacitor projects
+        uses: actions/upload-artifact@v4
+        with:
+          name: capacitor-projects
+          path: |
+            apps/web/android/
+            apps/web/ios/
+          retention-days: 7
+
+  # ============================================
+  # Build API
+  # ============================================
+  build-api:
+    name: Build API
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, test-api]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter @ludo-nexus/api run db:generate
+
+      - name: Build API
+        run: pnpm --filter @ludo-nexus/api run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-build
+          path: apps/api/dist/
+          retention-days: 7
+
+  # ============================================
+  # E2E Tests (Playwright)
+  # ============================================
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build-web, build-api]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @ludo-nexus/web exec playwright install --with-deps chromium
+
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: apps/web/.next/
+
+      - name: Start API server
+        run: |
+          cd apps/api
+          npm run start:prod &
+          sleep 10
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+      - name: Start web preview server
+        run: |
+          cd apps/web
+          npm run start &
+          sleep 10
+
+      - name: Run E2E tests
+        run: pnpm --filter @ludo-nexus/web run test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-results
+          path: apps/web/test-results/
+          retention-days: 7
+
+  # ============================================
+  # Deploy to Staging (on develop branch)
+  # ============================================
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: [build-web, build-api, e2e-tests]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    steps:
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: apps/web/.next/
+
+      - name: Download API build
+        uses: actions/download-artifact@v4
+        with:
+          name: api-build
+          path: apps/api/dist/
+
+      - name: Deploy web to Vercel (staging)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod=false'
+          working-directory: ./apps/web
+
+      - name: Deploy API to Railway/Render
+        run: |
+          # Add your API deployment commands here
+          echo "Deploying API to staging..."
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # or RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+
+      - name: Notify Discord
+        uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: "Staging Deployment ${{ job.status }}"
+          description: "Ludo Nexus staging deployment completed"
+          color: ${{ job.status == 'success' && '00ff00' || 'ff0000' }}
+
+  # ============================================
+  # Deploy to Production (on main branch + tag)
+  # ============================================
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: [build-web, build-api, e2e-tests]
+    if: github.ref == 'refs/heads/main' && startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    steps:
+      - name: Download web build
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: apps/web/.next/
+
+      - name: Download API build
+        uses: actions/download-artifact@v4
+        with:
+          name: api-build
+          path: apps/api/dist/
+
+      - name: Deploy web to Vercel (production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./apps/web
+
+      - name: Deploy API to production
+        run: |
+          # Add your production API deployment commands here
+          echo "Deploying API to production..."
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # or RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+
+      - name: Build and upload Android AAB
+        run: |
+          cd apps/web
+          # Build Android release
+          ./gradlew bundleRelease
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+
+      - name: Build and upload iOS IPA
+        run: |
+          cd apps/web/ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -archivePath build/App.xcarchive archive
+          xcodebuild -exportArchive -archivePath build/App.xcarchive -exportPath build/ipa -exportOptionsPlist ExportOptions.plist
+        env:
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+
+      - name: Upload Android AAB to Play Console
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.ludonexus.app
+          releaseFiles: apps/web/android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+
+      - name: Upload iOS IPA to TestFlight
+        uses: apple-actions/upload-testflight-build@v1
+        with:
+          app-path: apps/web/ios/App/build/ipa/App.ipa
+          issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-key: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+          api-issuer: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+
+      - name: Notify Discord
+        uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          title: "Production Deployment ${{ job.status }}"
+          description: "Ludo Nexus v${{ github.ref_name }} deployed to production"
+          color: ${{ job.status == 'success' && '00ff00' || 'ff0000' }}

@@ -170,7 +170,7 @@ class ApiClient {
     return this.get('/api/user/stats');
   }
 
-  async getMatchHistory(page = 1, limit = 20) {
+  async getMatchmakingHistory(page = 1, limit = 20) {
     return this.get('/api/user/matches', { params: { page, limit } });
   }
 
@@ -220,7 +220,7 @@ class ApiClient {
     return this.get('/api/match/history', { params: { page, limit } });
   }
 
-  async getMatchReplay(matchId: UUID) {
+  async getAdminMatchReplay(matchId: UUID) {
     return this.get(`/api/match/replay/${matchId}`);
   }
 
@@ -432,19 +432,19 @@ class ApiClient {
     return this.get(`/api/admin/matches/${matchId}/replay`);
   }
 
-  async getTournaments(filters?: any, page = 1, limit = 50) {
+  async getAdminTournaments(filters?: any, page = 1, limit = 50) {
     return this.get('/api/admin/tournaments', { params: { ...filters, page, limit } });
   }
 
-  async createTournament(data: any) {
+  async createAdminTournament(data: any) {
     return this.post('/api/admin/tournaments', data);
   }
 
-  async getTransactions(filters?: any, page = 1, limit = 50) {
+  async getAdminTransactions(filters?: any, page = 1, limit = 50) {
     return this.get('/api/admin/transactions', { params: { ...filters, page, limit } });
   }
 
-  async getWithdrawals(filters?: any, page = 1, limit = 50) {
+  async getAdminWithdrawals(filters?: any, page = 1, limit = 50) {
     return this.get('/api/admin/withdrawals', { params: { ...filters, page, limit } });
   }
 

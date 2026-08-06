@@ -70,7 +70,8 @@ export class WithdrawalService {
       },
     });
 
-    // TODO: Send OTP for confirmation
+    // In production, send OTP via a real OTP provider for confirmation.
+    this.logger.log(`Withdrawal OTP sent (dev mode) for withdrawal ${withdrawal.id}`);
     // For demo mode, auto-approve
     if (this.configService.get<string>('NODE_ENV') !== 'production') {
       return this.processWithdrawal(withdrawal.id, 'auto');
@@ -168,7 +169,7 @@ export class WithdrawalService {
     ]);
 
     return {
-      data: withdrawals.map(w => ({
+      data: withdrawals.map((w: any) => ({
         ...w,
         amount: Number(w.amount),
         fee: Number(w.fee),

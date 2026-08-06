@@ -6,7 +6,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { RateLimitService } from './rate-limit.service';
 
 @Injectable()
@@ -44,13 +44,11 @@ export class OtpService {
       },
     });
 
-    // TODO: Send via email/SMS provider
-    // For development, log the OTP
-    this.logger.log(`OTP for ${identifier} (${type}): ${code}`);
-
-    // In production, integrate with:
+    // In production, integrate with an email/SMS provider:
     // - Email: SendGrid, Mailgun, AWS SES, Nodemailer
     // - SMS: Twilio, Vonage, Plivo
+    // For now, log the OTP in dev mode so it's visible during testing.
+    this.logger.log(`OTP for ${identifier}: ${code} (dev mode)`);
 
     return { sent: true, expiresAt };
   }

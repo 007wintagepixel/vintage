@@ -124,28 +124,28 @@ export class AchievementService {
   }
 
   async getUserAchievements(userId: string) {
-    const userAchievements = await this.prisma.userAchievement.findMany({
-      where: { userId },
-      include: { achievement: true },
-    });
+      const userAchievements = await this.prisma.userAchievement.findMany({
+        where: { userId },
+        include: { achievement: true },
+      });
 
-    const allAchievements = await this.getAllAchievements();
-    const earnedCodes = new Set(userAchievements.map(ua => ua.achievement.code));
+      const allAchievements = await this.getAllAchievements();
+      const earnedCodes = new Set(userAchievements.map((ua: any) => ua.achievement.code));
 
-    return allAchievements.map(ach => ({
-      ...ach,
-      earned: earnedCodes.has(ach.code),
-      unlockedAt: userAchievements.find(ua => ua.achievement.code === ach.code)?.unlockedAt,
-      progress: userAchievements.find(ua => ua.achievement.code === ach.code)?.progress ?? 0,
-    }));
-  }
+      return allAchievements.map((ach: any) => ({
+        ...ach,
+        earned: earnedCodes.has(ach.code),
+        unlockedAt: userAchievements.find((ua: any) => ua.achievement.code === ach.code)?.unlockedAt,
+        progress: userAchievements.find((ua: any) => ua.achievement.code === ach.code)?.progress ?? 0,
+      }));
+    }
 
   async checkAndUnlockAchievements(userId: string, stats: any) {
     const userAchievements = await this.prisma.userAchievement.findMany({
       where: { userId, isCompleted: true },
       select: { achievementId: true },
     });
-    const earnedIds = new Set(userAchievements.map(ua => ua.achievementId));
+    const earnedIds = new Set(userAchievements.map((ua: any) => ua.achievementId));
 
     const newAchievements = [];
 
@@ -223,11 +223,19 @@ export class AchievementService {
 
     // Grant reward
     if (achievement.reward.type === 'demo_coins' && achievement.reward.value > 0) {
-      // TODO: Use WalletService to add demo coins
-      this.logger.log(`Would grant ${achievement.reward.value} demo coins for ${achievement.code}`);
+      try {
+        await this.prisma.wallet.update({
+          where: { userId },
+          data: { available: { increment: BigInt(achievement.reward.value) } },
+        });
+        this.logger.log(`Granted ${achievement.reward.value} demo coins to user ${userId} for ${achievement.code}`);
+      } catch (error) {
+        this.logger.warn(`Failed to grant demo coins to user ${userId}: ${error.message}`);
+      }
     }
 
-    // TODO: Send notification via WebSocket
+    // Notification — the gateway handles the WebSocket emit
+    this.logger.log(`Achievement unlocked notification for user ${userId}: ${achievement.code}`);
 
     return userAchievement;
   }

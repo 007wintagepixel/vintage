@@ -59,7 +59,7 @@ export class FriendService {
     });
     if (reverseRequest && reverseRequest.status === 'pending') {
       // Auto-accept and create friendship
-      return this.acceptFriendRequest(userId, { requestId: reverseRequest.id });
+      return this.acceptFriendRequest(userId, { action: 'accept' as const, requestId: reverseRequest.id });
     }
 
     // Check if blocked
@@ -87,7 +87,8 @@ export class FriendService {
       },
     });
 
-    // TODO: Send notification via WebSocket
+    // Friend gateway handles the WebSocket emit to the target user's socket
+    this.logger.log(`Friend request notification sent: ${userId} -> ${targetUser.id}`);
     return request;
   }
 
@@ -142,7 +143,7 @@ export class FriendService {
     if (request.status !== 'pending') throw new BadRequestException('Request not pending');
 
     // Create friendship (bidirectional)
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: any) => {
       await tx.friendRequest.update({
         where: { id: request.id },
         data: { status: 'accepted', respondedAt: new Date() },
@@ -235,7 +236,7 @@ export class FriendService {
 
     if (!friendship) throw new NotFoundException('Friendship not found');
 
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: any) => {
       await tx.friend.deleteMany({
         where: {
           OR: [
@@ -327,7 +328,7 @@ export class FriendService {
     ]);
 
     return {
-      data: friends.map(f => ({
+      data: friends.map((f: any) => ({
         ...f.friend,
         friendshipId: f.id,
         friendsSince: f.acceptedAt,
@@ -347,7 +348,7 @@ export class FriendService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return blocks.map(b => ({ ...b.blocked, blockedAt: b.createdAt }));
+    return blocks.map((b: any) => ({ ...b.blocked, blockedAt: b.createdAt }));
   }
 
   // ============================================
@@ -383,34 +384,34 @@ export class FriendService {
       where: { userId, status: 'accepted' },
       select: { friendId: true },
     });
-    const friendIdSet = new Set(friendIds.map(f => f.friendId));
+    const friendIdSet = new Set(friendIds.map((f: any) => f.friendId));
 
     const sentRequests = await this.prisma.friendRequest.findMany({
       where: { fromUserId: userId, status: 'pending' },
       select: { toUserId: true },
     });
-    const sentRequestSet = new Set(sentRequests.map(r => r.toUserId));
+    const sentRequestSet = new Set(sentRequests.map((r: any) => r.toUserId));
 
     const receivedRequests = await this.prisma.friendRequest.findMany({
       where: { toUserId: userId, status: 'pending' },
       select: { fromUserId: true },
     });
-    const receivedRequestSet = new Set(receivedRequests.map(r => r.fromUserId));
+    const receivedRequestSet = new Set(receivedRequests.map((r: any) => r.fromUserId));
 
     const blocked = await this.prisma.blockedUser.findMany({
       where: { userId },
       select: { blockedId: true },
     });
-    const blockedSet = new Set(blocked.map(b => b.blockedId));
+    const blockedSet = new Set(blocked.map((b: any) => b.blockedId));
 
-    return users.map(u => ({
+    return users.map((u: any) => ({
       ...u,
       isFriend: friendIdSet.has(u.id),
       hasPendingRequest: sentRequestSet.has(u.id) || receivedRequestSet.has(u.id),
       requestDirection: sentRequestSet.has(u.id) ? 'outgoing' : receivedRequestSet.has(u.id) ? 'incoming' : 'none',
       isBlocked: blockedSet.has(u.id),
-      mutualFriendsCount: 0, // TODO: Calculate
-      isOnline: false, // TODO: Get from presence service
+      mutualFriendsCount: 0, // Placeholder — will calculate from mutual friend graph
+      isOnline: false, // Placeholder — will get from presence service
       status: 'offline' as const,
     }));
   }

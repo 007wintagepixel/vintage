@@ -110,7 +110,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const userId = this.getUserIdFromSocket(client);
       if (!userId) return { error: 'Not authenticated' };
 
-      const message = await this.chatService.sendMessage(userId, {
+      const message = await this.chatService.sendMessage(data.conversationId, userId, {
         conversationId: data.conversationId,
         content: data.content,
         type: (data.type as any) ?? 'text',

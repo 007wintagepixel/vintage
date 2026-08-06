@@ -47,7 +47,7 @@ export class ChatService {
     });
 
     return {
-      data: participations.map(p => ({
+      data: participations.map((p: any) => ({
         ...p.conversation,
         unreadCount: p.unreadCount,
         lastMessage: p.conversation.messages[0] ?? null,
@@ -94,7 +94,7 @@ export class ChatService {
     const conversation = await this.prisma.chatConversation.create({
       data: {
         type: data.type,
-        name: data.name,
+        name: null,
         teamId: data.teamId,
         matchId: null,
         participants: {
@@ -113,7 +113,7 @@ export class ChatService {
 
     // Send initial message if provided
     if (data.initialMessage) {
-      await this.sendMessage(userId, {
+      await this.sendMessage(conversation.id, userId, {
         conversationId: conversation.id,
         content: data.initialMessage,
         type: 'text',
@@ -137,9 +137,9 @@ export class ChatService {
       include: { participants: true },
     });
 
-    return conversations.find(c => 
+    return conversations.find((c: any) => 
       c.participants.length === 2 &&
-      c.participants.every(p => [userId1, userId2].includes(p.userId))
+      c.participants.every((p: any) => [userId1, userId2].includes(p.userId))
     ) ?? null;
   }
 
@@ -156,20 +156,20 @@ export class ChatService {
   // MESSAGES
   // ============================================
 
-  async getMessages(userId: string, data: MessageQuery) {
+  async getMessages(conversationId: string, userId: string, before?: string, limit = 50) {
     // Verify participation
     const participation = await this.prisma.chatParticipant.findUnique({
-      where: { conversationId_userId: { conversationId: data.conversationId, userId } },
+      where: { conversationId_userId: { conversationId, userId } },
     });
     if (!participation) throw new ForbiddenException('Not a participant');
 
     const where: any = {
-      conversationId: data.conversationId,
+      conversationId,
       isDeleted: false,
     };
 
-    if (data.before) {
-      where.sentAt = { lt: new Date(data.before) };
+    if (before) {
+      where.sentAt = { lt: new Date(before) };
     }
 
     const [messages, total] = await Promise.all([
@@ -180,27 +180,27 @@ export class ChatService {
           replyTo: { include: { sender: { select: { id: true, username: true } } } },
         },
         orderBy: { sentAt: 'desc' },
-        take: data.limit,
+        take: limit,
       }),
       this.prisma.chatMessage.count({ where }),
     ]);
 
     // Mark as read
     await this.prisma.chatParticipant.update({
-      where: { conversationId_userId: { conversationId: data.conversationId, userId } },
+      where: { conversationId_userId: { conversationId, userId } },
       data: { unreadCount: 0 },
     });
 
     return {
       data: messages.reverse(),
-      meta: { total, hasMore: total > data.limit },
+      meta: { total, hasMore: total > limit },
     };
   }
 
-  async sendMessage(userId: string, data: SendMessage) {
+  async sendMessage(conversationId: string, userId: string, data: SendMessage) {
     // Verify participation
     const participation = await this.prisma.chatParticipant.findUnique({
-      where: { conversationId_userId: { conversationId: data.conversationId, userId } },
+      where: { conversationId_userId: { conversationId, userId } },
     });
     if (!participation) throw new ForbiddenException('Not a participant');
 
@@ -236,7 +236,7 @@ export class ChatService {
     });
 
     // Update conversation updatedAt and increment unread for others
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: any) => {
       await tx.chatConversation.update({
         where: { id: data.conversationId },
         data: { updatedAt: new Date() },
@@ -325,7 +325,7 @@ export class ChatService {
 
     if (!globalConversation) throw new Error('Global chat not found');
 
-    return this.sendMessage(userId, {
+    return this.sendMessage(globalConversation.id, userId, {
       conversationId: globalConversation.id,
       content,
       type: 'text',

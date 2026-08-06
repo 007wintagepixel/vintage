@@ -18,16 +18,10 @@ import {
   calculateTeamResult,
   rollDice,
   createDiceRoll,
-  GameRules,
-  GameState,
-  PlayerState,
-  TokenState,
-  Move,
-  DiceRoll,
-  PlayerColor,
-  GameMode,
-  MatchStatus,
+  DEFAULT_GAME_RULES,
 } from '@ludo-nexus/game-engine';
+
+import type { GameRules, GameState, PlayerState, TokenState, Move, DiceRoll, PlayerColor, GameMode, MatchStatus } from '@ludo-nexus/shared-types';
 
 @Injectable()
 export class GameEngineService {

@@ -310,7 +310,8 @@ class GhostButton extends StatelessWidget {
   }
 }
 
-class IconButton extends StatelessWidget {
+// Custom Icon Button
+class AppIconButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Widget icon;
   final double size;
@@ -318,7 +319,7 @@ class IconButton extends StatelessWidget {
   final Color? iconColor;
   final String? tooltip;
   
-  const IconButton({
+  const AppIconButton({
     super.key,
     required this.onPressed,
     required this.icon,

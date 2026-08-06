@@ -179,7 +179,7 @@ export class TournamentService {
 
     // Check entry fee
     if (tournament.entryFee > 0) {
-      // TODO: Lock funds
+      await this.lockTournamentFunds(userId, tournament.entryFee, tournament.id);
     }
 
     const registration = await this.prisma.tournamentRegistration.create({
@@ -211,7 +211,9 @@ export class TournamentService {
       where: { id: registration.id },
     });
 
-    // TODO: Release locked funds
+    if (tournament.entryFee > 0) {
+      await this.releaseTournamentFunds(userId, tournament.entryFee, tournament.id);
+    }
 
     return { success: true };
   }
@@ -269,7 +271,7 @@ export class TournamentService {
 
     for (const reg of registrations) {
       if (tournament.entryFee > 0) {
-        // TODO: Refund locked funds
+        await this.refundTournamentFunds(reg.userId, tournament.entryFee, tournament.id);
       }
     }
 
@@ -279,6 +281,106 @@ export class TournamentService {
     });
 
     return { success: true };
+  }
+
+  // ============================================
+  // WALLET HELPERS (tournament fund locking)
+  // ============================================
+
+  private async lockTournamentFunds(userId: string, amount: number, tournamentId: string) {
+    try {
+      await this.prisma.$transaction(async (tx: any) => {
+        const wallet = await tx.wallet.findUnique({ where: { userId } });
+        if (!wallet || wallet.available < amount) {
+          throw new BadRequestException('Insufficient funds for tournament entry');
+        }
+        const newAvailable = wallet.available - BigInt(amount);
+        const newLocked = wallet.locked + BigInt(amount);
+        await tx.wallet.update({
+          where: { userId },
+          data: { available: newAvailable, locked: newLocked },
+        });
+        await tx.ledgerEntry.create({
+          data: {
+            walletId: wallet.id,
+            userId,
+            type: 'debit',
+            amount: -BigInt(amount),
+            balanceType: 'available',
+            referenceType: 'adjustment',
+            referenceId: tournamentId,
+            description: `Tournament entry fee lock: ${tournamentId}`,
+            runningBalance: newAvailable,
+            idempotencyKey: `tour-lock-${tournamentId}-${userId}-${Date.now()}`,
+          },
+        });
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to lock tournament funds for user ${userId}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private async releaseTournamentFunds(userId: string, amount: number, tournamentId: string) {
+    try {
+      await this.prisma.$transaction(async (tx: any) => {
+        const wallet = await tx.wallet.findUnique({ where: { userId } });
+        if (!wallet) throw new Error('Wallet not found');
+        const newLocked = wallet.locked - BigInt(amount);
+        const newAvailable = wallet.available + BigInt(amount);
+        await tx.wallet.update({
+          where: { userId },
+          data: { locked: newLocked, available: newAvailable },
+        });
+        await tx.ledgerEntry.create({
+          data: {
+            walletId: wallet.id,
+            userId,
+            type: 'credit',
+            amount: BigInt(amount),
+            balanceType: 'available',
+            referenceType: 'adjustment',
+            referenceId: tournamentId,
+            description: `Tournament entry fee release: ${tournamentId}`,
+            runningBalance: newAvailable,
+            idempotencyKey: `tour-release-${tournamentId}-${userId}-${Date.now()}`,
+          },
+        });
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to release tournament funds for user ${userId}: ${error.message}`);
+    }
+  }
+
+  private async refundTournamentFunds(userId: string, amount: number, tournamentId: string) {
+    try {
+      await this.prisma.$transaction(async (tx: any) => {
+        const wallet = await tx.wallet.findUnique({ where: { userId } });
+        if (!wallet) throw new Error('Wallet not found');
+        const newLocked = wallet.locked - BigInt(amount);
+        const newAvailable = wallet.available + BigInt(amount);
+        await tx.wallet.update({
+          where: { userId },
+          data: { locked: newLocked, available: newAvailable },
+        });
+        await tx.ledgerEntry.create({
+          data: {
+            walletId: wallet.id,
+            userId,
+            type: 'credit',
+            amount: BigInt(amount),
+            balanceType: 'available',
+            referenceType: 'adjustment',
+            referenceId: tournamentId,
+            description: `Tournament entry fee refund (cancelled): ${tournamentId}`,
+            runningBalance: newAvailable,
+            idempotencyKey: `tour-refund-${tournamentId}-${userId}-${Date.now()}`,
+          },
+        });
+      });
+    } catch (error) {
+      this.logger.warn(`Failed to refund tournament funds for user ${userId}: ${error.message}`);
+    }
   }
 
   // ============================================
@@ -352,7 +454,7 @@ export class TournamentService {
       }
       rounds.push({ roundNumber, matches });
       // Next round will have half the players (winners)
-      currentRound = matches.map((_, i) => ({ seed: i + 1 })); // Placeholders for winners
+      currentRound = matches.map((_, i) => ({ seed: i + 1, registrationId: null, userId: null })); // Placeholders for winners
       roundNumber++;
     }
 

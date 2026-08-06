@@ -88,7 +88,7 @@ interface PageContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const PageContainer = forwardRef<HTMLDivElement, PageContainerProps>(
-  ({ className, maxWidth = '7xl', children, ...props }, ref) => {
+  ({ className, maxWidth = 'xl', children, ...props }, ref) => {
     const maxWidthClasses = {
       sm: 'max-w-3xl',
       md: 'max-w-5xl',

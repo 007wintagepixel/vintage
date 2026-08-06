@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+dist/
+.turbo/
+out/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+*.lcov
+
+# Prisma
+prisma/migrations/dev.db*
+
+# Capacitor native builds
+apps/web/android/app/build/
+apps/web/ios/build/
+apps/web/ios/Pods/
+apps/web/android/.gradle/
+
+# Screenshots (dev artifacts)
+screenshot-base64.txt
+screenshot-data.txt
+
+# Temp files
+*.tmp
+*.bak

@@ -19,6 +19,7 @@ import { FriendService } from './friend.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
+import { z } from 'zod';
 import { Validation } from '@ludo-nexus/validation';
 
 @ApiTags('Friends')
@@ -65,7 +66,7 @@ export class FriendController {
   @HttpCode(HttpStatus.CREATED)
   async sendRequest(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['sendFriendRequest'],
+    @Body() data: z.infer<typeof Validation['sendFriendRequest']>,
   ) {
     return this.friendService.sendFriendRequest(userId, data);
   }
@@ -76,7 +77,7 @@ export class FriendController {
   @HttpCode(HttpStatus.OK)
   async performAction(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['friendAction'],
+    @Body() data: z.infer<typeof Validation['friendAction']>,
   ) {
     return this.friendService.performFriendAction(userId, data);
   }
@@ -88,7 +89,7 @@ export class FriendController {
   @ApiResponse({ status: 200, description: 'Search results' })
   async searchUsers(
     @CurrentUser('id') userId: string,
-    @Query() data: Validation['userSearch'],
+    @Query() data: z.infer<typeof Validation['userSearch']>,
   ) {
     return this.friendService.searchUsers(userId, data);
   }

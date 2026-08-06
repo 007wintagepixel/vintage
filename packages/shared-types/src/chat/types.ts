@@ -65,6 +65,12 @@ export const CreateConversationSchema = z.object({
 });
 export type CreateConversation = z.infer<typeof CreateConversationSchema>;
 
+export const MessageQuerySchema = z.object({
+  before: z.string().datetime().optional(),
+  limit: z.coerce.number().int().positive().max(100).default(50),
+});
+export type MessageQuery = z.infer<typeof MessageQuerySchema>;
+
 // ============================================
 // EXPORTS
 // ============================================

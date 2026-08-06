@@ -88,7 +88,7 @@ export type BotDecision = {
 export interface BotAI {
     decide(gameState: GameState, playerIndex: number): BotDecision;
 }
-export declare const GameEngine: {
+export declare const GameEngineUtils: {
     createInitialGameState: typeof createInitialGameState;
     getLegalMoves: typeof getLegalMoves;
     moveToken: typeof moveToken;
@@ -102,14 +102,28 @@ export declare const GameEngine: {
     calculateTeamResult: typeof calculateTeamResult;
     rollDice: typeof rollDice;
     createDiceRoll: typeof createDiceRoll;
-    BOARD_SIZE: any;
-    HOME_POSITION: any;
-    FINISHED_POSITION: any;
-    TOKENS_PER_PLAYER: any;
-    PLAYER_COLORS: any;
-    START_POSITIONS: any;
-    HOME_LANE_ENTRY: any;
-    DEFAULT_SAFE_CELLS: any;
-    DEFAULT_GAME_RULES: any;
+    BOARD_SIZE: number;
+    HOME_POSITION: number;
+    FINISHED_POSITION: number;
+    TOKENS_PER_PLAYER: number;
+    PLAYER_COLORS: ("red" | "green" | "yellow" | "blue")[];
+    START_POSITIONS: Record<"red" | "green" | "yellow" | "blue", number>;
+    HOME_LANE_ENTRY: Record<"red" | "green" | "yellow" | "blue", number>;
+    DEFAULT_SAFE_CELLS: number[];
+    DEFAULT_GAME_RULES: {
+        tokensPerPlayer: number;
+        entryRoll: number;
+        allowThreeSixes: boolean;
+        extraTurnOnSix: boolean;
+        extraTurnOnCapture: boolean;
+        extraTurnOnHome: boolean;
+        turnTimeSeconds: number;
+        reconnectionGraceSeconds: number;
+        inactivityLimit: number;
+        allowBlockades: boolean;
+        safeCells: number[];
+        teamMode: boolean;
+        botDifficulty: "easy" | "medium" | "hard";
+    };
 };
 //# sourceMappingURL=gameEngine.d.ts.map

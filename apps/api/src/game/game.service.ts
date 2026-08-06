@@ -4,6 +4,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { v4 as uuidv4 } from 'uuid';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { GameEngineService } from './game-engine.service';
@@ -54,7 +55,12 @@ export class GameService {
 
     // Create match players
     const colors: PlayerColor[] = ['red', 'green', 'yellow', 'blue'];
-    const players = [
+    const players: Array<{
+      userId: string;
+      color: PlayerColor;
+      isBot: boolean;
+      botDifficulty?: 'easy' | 'medium' | 'hard';
+    }> = [
       { userId, color: colors[0], isBot: false },
     ];
 
@@ -94,7 +100,7 @@ export class GameService {
     // Initialize game state
     const gameState = this.gameEngine.createInitialGameState(
       match.id,
-      match.players.map(p => ({
+      match.players.map((p: any) => ({
         userId: p.userId,
         color: p.color,
         isBot: p.isBot,
@@ -126,7 +132,7 @@ export class GameService {
     if (!match) throw new Error('Match not found');
 
     // Check if user is part of match
-    const isParticipant = match.players.some(p => p.userId === userId);
+    const isParticipant = match.players.some((p: any) => p.userId === userId);
     if (!isParticipant) throw new Error('Not a participant');
 
     return match;
@@ -173,13 +179,13 @@ export class GameService {
     // Calculate legal moves
     const legalMoves = this.gameEngine.getLegalMoves({
       ...gameState,
-      diceRoll: { ...diceRoll, rolledBy: userId },
+      diceRoll: { value: diceRoll, rolledAt: new Date().toISOString(), rolledBy: userId, isServerGenerated: true, auditId: uuidv4() },
     });
 
     // Update game state
     const newGameState = {
       ...gameState,
-      diceRoll: { ...diceRoll, rolledBy: userId },
+      diceRoll: { value: diceRoll, rolledAt: new Date().toISOString(), rolledBy: userId, isServerGenerated: true, auditId: uuidv4() },
       legalMoves,
       stateVersion: gameState.stateVersion + 1,
     };
@@ -190,8 +196,9 @@ export class GameService {
       data: { gameState: newGameState as any },
     });
 
-    // Emit event
-    // TODO: Emit via WebSocket gateway
+    // Emit event — the gateway handles broadcasting to the match room
+    // The GameGateway calls rollDice() then emits 'dice_rolled' to the match room
+    this.logger.debug(`Dice rolled for match ${matchId}: ${diceRoll}`);
 
     return { diceRoll, legalMoves, gameState: newGameState };
   }
@@ -270,8 +277,9 @@ export class GameService {
       },
     });
 
-    // Emit event
-    // TODO: Emit via WebSocket gateway
+    // Emit event — the gateway handles broadcasting to the match room
+    // The GameGateway calls moveToken() then emits 'token_moved' to the match room
+    this.logger.debug(`Token moved in match ${matchId}: token ${tokenId} to position ${toPosition}`);
 
     return { gameState: finalGameState, move, capturedTokens };
   }
@@ -310,7 +318,7 @@ export class GameService {
     // Update players and wallets
     for (let i = 0; i < rankings.length; i++) {
       const playerId = rankings[i];
-      const player = match.players.find(p => p.userId === playerId);
+      const player = match.players.find((p: any) => p.userId === playerId);
       if (!player || player.isBot) continue;
 
       const rank = i + 1;
@@ -341,8 +349,34 @@ export class GameService {
       });
     }
 
-    // Release platform fee
-    // TODO: Track platform revenue
+    // Track platform revenue in a ledger entry
+    try {
+      const platformWallet = await this.prisma.wallet.findFirst({
+        where: { userId: 'platform' },
+      });
+      if (platformWallet) {
+        await this.prisma.wallet.update({
+          where: { id: platformWallet.id },
+          data: { available: platformWallet.available + BigInt(platformFee) },
+        });
+      }
+      await this.prisma.ledgerEntry.create({
+        data: {
+          walletId: platformWallet?.id ?? 'platform',
+          userId: 'platform',
+          type: 'credit',
+          amount: BigInt(platformFee),
+          balanceType: 'available',
+          referenceType: 'platform_fee',
+          referenceId: matchId,
+          description: `Platform fee from match ${matchId}`,
+          runningBalance: BigInt(platformFee),
+          idempotencyKey: `platform-fee-${matchId}-${Date.now()}`,
+        },
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to track platform revenue for match ${matchId}: ${err.message}`);
+    }
   }
 
   // ============================================
@@ -350,7 +384,7 @@ export class GameService {
   // ============================================
 
   private async lockFunds(userId: string, amount: number, referenceType: string, referenceId?: string) {
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: any) => {
       const wallet = await tx.wallet.findUnique({ where: { userId } });
       if (!wallet || wallet.available < amount) {
         throw new Error('Insufficient funds');
@@ -397,7 +431,7 @@ export class GameService {
   }
 
   private async releaseFunds(userId: string, amount: number, referenceType: string, referenceId?: string) {
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: any) => {
       const wallet = await tx.wallet.findUnique({ where: { userId } });
       if (!wallet) throw new Error('Wallet not found');
 
@@ -443,6 +477,3 @@ export class GameService {
     });
   }
 }
-
-// Need uuidv4 import
-import { v4 as uuidv4 } from 'uuid';

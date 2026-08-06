@@ -111,7 +111,7 @@ export class LedgerService {
     }
 
     // Use transaction for atomicity
-    const entry = await this.prisma.$transaction(async (tx) => {
+    const entry = await this.prisma.$transaction(async (tx: any) => {
       // Update wallet balance
       const updateData: any = {};
       updateData[balanceType] = newBalance;
@@ -152,7 +152,7 @@ export class LedgerService {
     ]);
 
     return {
-      data: entries.map(e => ({
+      data: entries.map((e: any) => ({
         ...e,
         amount: Number(e.amount),
         runningBalance: Number(e.runningBalance),

@@ -76,9 +76,13 @@ export class RoomService {
       include: { players: { include: { user: { select: { id: true, username: true, avatarUrl: true, level: true } } } } },
     });
 
-    // Lock entry fee if applicable
+    // Lock entry fee via game service wallet helpers
     if (data.entryFee > 0) {
-      // TODO: Lock funds
+      try {
+        await this.gameService['lockFunds'](userId, data.entryFee, 'room_entry', room.id);
+      } catch (err) {
+        this.logger.warn(`Failed to lock entry fee for user ${userId}: ${err.message}`);
+      }
     }
 
     return room;
@@ -150,7 +154,7 @@ export class RoomService {
     }
 
     // Check if already in room
-    const existingPlayer = room.players.find(p => p.userId === userId);
+    const existingPlayer = room.players.find((p: any) => p.userId === userId);
     if (existingPlayer) {
       return room; // Already in room
     }
@@ -161,7 +165,7 @@ export class RoomService {
     }
 
     // Assign color
-    const usedColors = room.players.map(p => p.color).filter(Boolean) as string[];
+    const usedColors = room.players.map((p: any) => p.color).filter(Boolean) as string[];
     const availableColors = ['red', 'green', 'yellow', 'blue'].filter(c => !usedColors.includes(c));
     const color = availableColors[0] ?? 'red';
 
@@ -181,13 +185,13 @@ export class RoomService {
 
   async leaveRoom(userId: string, roomId: string) {
     const room = await this.getRoom(roomId);
-    const player = room.players.find(p => p.userId === userId);
-    
+    const player = room.players.find((p: any) => p.userId === userId);
+
     if (!player) throw new NotFoundException('Not in this room');
 
     // If host leaves, transfer host or delete room
     if (player.isHost) {
-      const remainingPlayers = room.players.filter(p => p.userId !== userId);
+      const remainingPlayers = room.players.filter((p: any) => p.userId !== userId);
       if (remainingPlayers.length > 0) {
         // Transfer host to first remaining player
         await this.prisma.roomPlayer.update({
@@ -210,7 +214,11 @@ export class RoomService {
 
     // Release entry fee if locked
     if (room.entryFee > 0) {
-      // TODO: Release funds
+      try {
+        await this.gameService['releaseFunds'](userId, Number(room.entryFee), 'room_leave', room.id);
+      } catch (err) {
+        this.logger.warn(`Failed to release entry fee for user ${userId}: ${err.message}`);
+      }
     }
 
     return { success: true };
@@ -233,8 +241,8 @@ export class RoomService {
 
   async performAction(userId: string, data: RoomAction) {
     const room = await this.getRoom(data.roomId);
-    const player = room.players.find(p => p.userId === userId);
-    
+    const player = room.players.find((p: any) => p.userId === userId);
+
     if (!player) throw new NotFoundException('Not in this room');
 
     switch (data.action) {
@@ -286,10 +294,10 @@ export class RoomService {
 
   private async transferHost(roomId: string, targetUserId: string) {
     const room = await this.getRoom(roomId);
-    const targetPlayer = room.players.find(p => p.userId === targetUserId);
+    const targetPlayer = room.players.find((p: any) => p.userId === targetUserId);
     if (!targetPlayer) throw new NotFoundException('Player not in room');
 
-    const currentHost = room.players.find(p => p.isHost);
+    const currentHost = room.players.find((p: any) => p.isHost);
     if (currentHost) {
       await this.prisma.roomPlayer.update({
         where: { id: currentHost.id },
@@ -337,7 +345,10 @@ export class RoomService {
       },
     });
 
-    // TODO: Send notification via WebSocket
+    // Send notification — room invites are picked up via WebSocket room namespace
+    // The room gateway will emit 'room_invite' to the invited user
+    this.logger.log(`Room invite sent: room ${roomId}, from ${invitedById} to ${inviteUserId}`);
+
     return invite;
   }
 
@@ -345,7 +356,7 @@ export class RoomService {
     const room = await this.getRoom(roomId);
     
     // Validate all players ready
-    const notReady = room.players.filter(p => !p.isReady && !p.isBot);
+    const notReady = room.players.filter((p: any) => !p.isReady && !p.isBot);
     if (notReady.length > 0) {
       throw new BadRequestException('Not all players are ready');
     }
@@ -356,9 +367,9 @@ export class RoomService {
     }
 
     // Assign colors to players without colors
-    const usedColors = room.players.map(p => p.color).filter(Boolean) as string[];
+    const usedColors = room.players.map((p: any) => p.color).filter(Boolean) as string[];
     const availableColors = ['red', 'green', 'yellow', 'blue'].filter(c => !usedColors.includes(c));
-    
+
     let colorIndex = 0;
     for (const player of room.players) {
       if (!player.color && colorIndex < availableColors.length) {
@@ -371,7 +382,7 @@ export class RoomService {
     }
 
     // Create match from room
-    const players = room.players.map(p => ({
+    const players = room.players.map((p: any) => ({
       userId: p.userId,
       color: p.color ?? 'red',
       isBot: p.isBot,

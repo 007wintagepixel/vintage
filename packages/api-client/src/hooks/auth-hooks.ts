@@ -6,12 +6,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, queryKeys } from '../index';
 import type { 
   RegisterRequest, LoginRequest, OTPVerify, ForgotPassword, 
-  ResetPassword, RefreshToken, UpdateProfile, ChangePassword 
+  ResetPassword, UpdateProfile, ChangePassword 
 } from '@ludo-nexus/validation';
 
 export function useAuthQueries() {
-  const queryClient = useQueryClient();
-
   const profile = useQuery({
     queryKey: queryKeys.auth.profile(),
     queryFn: () => apiClient.getProfile(),

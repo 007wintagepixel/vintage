@@ -9,6 +9,8 @@ import {
   Body,
   Param,
   Query,
+  Patch,
+  Delete,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -19,7 +21,11 @@ import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
-import { Validation } from '@ludo-nexus/validation';
+import type { 
+  CreateConversation, 
+  SendMessage, 
+  MessageQuery 
+} from '@ludo-nexus/shared-types';
 
 @ApiTags('Chat')
 @Controller({ path: 'chat', version: '1' })
@@ -57,7 +63,7 @@ export class ChatController {
   @HttpCode(HttpStatus.CREATED)
   async createConversation(
     @CurrentUser('id') userId: string,
-    @Body() data: Validation['createConversation'],
+    @Body() data: CreateConversation,
   ) {
     return this.chatService.createConversation(userId, data);
   }
@@ -81,9 +87,9 @@ export class ChatController {
   async getMessages(
     @CurrentUser('id') userId: string,
     @Param('conversationId') conversationId: string,
-    @Query() data: Validation['messageQuery'],
+    @Query() query: MessageQuery,
   ) {
-    return this.chatService.getMessages(userId, { ...data, conversationId });
+    return this.chatService.getMessages(conversationId, userId, query.before, query.limit);
   }
 
   @Post('conversations/:conversationId/messages')
@@ -93,31 +99,30 @@ export class ChatController {
   async sendMessage(
     @CurrentUser('id') userId: string,
     @Param('conversationId') conversationId: string,
-    @Body() data: Validation['sendMessage'],
+    @Body() data: SendMessage,
   ) {
-    return this.chatService.sendMessage(userId, { ...data, conversationId });
+    return this.chatService.sendMessage(conversationId, userId, data);
   }
 
-  @Get('global')
-  @ApiOperation({ summary: 'Get global chat messages' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Global chat messages' })
-  async getGlobalMessages(
-    @Query('page') page = 1,
-    @Query('limit') limit = 50,
-  ) {
-    return this.chatService.getGlobalChatMessages(page, limit);
-  }
-
-  @Post('global')
-  @ApiOperation({ summary: 'Send global message' })
-  @ApiResponse({ status: 201, description: 'Global message sent' })
-  @HttpCode(HttpStatus.CREATED)
-  async sendGlobalMessage(
+  @Patch('messages/:messageId')
+  @ApiOperation({ summary: 'Edit message' })
+  @ApiResponse({ status: 200, description: 'Message updated' })
+  async editMessage(
     @CurrentUser('id') userId: string,
+    @Param('messageId') messageId: string,
     @Body() data: { content: string },
   ) {
-    return this.chatService.sendGlobalMessage(userId, data.content);
+    return this.chatService.editMessage(messageId, userId, data.content);
+  }
+
+  @Delete('messages/:messageId')
+  @ApiOperation({ summary: 'Delete message' })
+  @ApiResponse({ status: 200, description: 'Message deleted' })
+  @HttpCode(HttpStatus.OK)
+  async deleteMessage(
+    @CurrentUser('id') userId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.chatService.deleteMessage(messageId, userId);
   }
 }

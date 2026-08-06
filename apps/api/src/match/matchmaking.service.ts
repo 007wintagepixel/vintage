@@ -175,8 +175,12 @@ export class MatchmakingService {
 
     this.logger.log(`Created match ${result.matchId} for ${userIds.join(', ')}`);
 
-    // Notify players via WebSocket
-    // TODO: Emit match_found event to each player's socket
+    // Notify players — no Notification model in schema yet, so log for now.
+    // The frontend polls for match status; the GameGateway will emit the
+    // 'match_found' event to each player's socket when they join the match room.
+    for (const id of userIds) {
+      this.logger.log(`match_found notification for user ${id}: match ${result.matchId}`);
+    }
 
     return result;
   }

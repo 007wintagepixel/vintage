@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: ludo-nexus-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ludonexus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ludonexus}
+      POSTGRES_DB: ${POSTGRES_DB:-ludonexus}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ludonexus}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ludo-nexus-network
+
+  # ============================================
+  # Redis Cache & Pub/Sub
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: ludo-nexus-redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ludo-nexus-network
+
+  # ============================================
+  # API Server (NestJS)
+  # ============================================
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: production
+    container_name: ludo-nexus-api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-ludonexus}:${POSTGRES_PASSWORD:-ludonexus}@postgres:5432/${POSTGRES_DB:-ludonexus}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-https://ludonexus.com}
+      API_URL: ${API_URL:-https://api.ludonexus.com}
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ludo-nexus-network
+    restart: unless-stopped
+
+  # ============================================
+  # Web App (Next.js)
+  # ============================================
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: production
+    container_name: ludo-nexus-web
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${API_URL:-https://api.ludonexus.com}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - ludo-nexus-network
+    restart: unless-stopped
+
+  # ============================================
+  # Nginx Reverse Proxy (Production)
+  # ============================================
+  nginx:
+    image: nginx:alpine
+    container_name: ludo-nexus-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/certs:/etc/nginx/certs:ro
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - ludo-nexus-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  nginx_cache:
+
+networks:
+  ludo-nexus-network:
+    driver: bridge
