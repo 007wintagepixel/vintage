@@ -22,6 +22,37 @@ import { AdminModule } from './admin/admin.module';
 import { HealthModule } from './health/health.module';
 import { WebsocketModule } from './websocket/websocket.module';
 
+// Build imports dynamically — BullMQ/Redis is optional
+const hasRedis = !!process.env.REDIS_URL || !!process.env.REDIS_HOST;
+const dynamicImports: any[] = [];
+
+if (hasRedis) {
+  // BullMQ for background jobs (requires Redis)
+  if (process.env.REDIS_URL) {
+    // Parse REDIS_URL (redis://[:password@]host:port)
+    const redisUrl = new URL(process.env.REDIS_URL);
+    dynamicImports.push(
+      BullModule.forRoot({
+        connection: {
+          host: redisUrl.hostname,
+          port: parseInt(redisUrl.port || '6379', 10),
+          password: redisUrl.password || undefined,
+        },
+      }),
+    );
+  } else {
+    dynamicImports.push(
+      BullModule.forRoot({
+        connection: {
+          host: process.env.REDIS_HOST ?? 'localhost',
+          port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+          password: process.env.REDIS_PASSWORD,
+        },
+      }),
+    );
+  }
+}
+
 @Module({
   imports: [
     // Configuration
@@ -42,14 +73,8 @@ import { WebsocketModule } from './websocket/websocket.module';
     // Task scheduling
     ScheduleModule.forRoot(),
 
-    // BullMQ for background jobs
-    BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
-        password: process.env.REDIS_PASSWORD,
-      },
-    }),
+    // BullMQ (only if Redis is available)
+    ...dynamicImports,
 
     // Core modules
     PrismaModule,
