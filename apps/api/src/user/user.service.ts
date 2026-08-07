@@ -38,7 +38,7 @@ export class UserService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    const { passwordHash, sessions, otps, devices, fraudAlerts, ...safeUser } = user;
+    const { passwordHash, ...safeUser } = user;
     return safeUser;
   }
 
@@ -88,7 +88,7 @@ export class UserService {
         wins: user.wins,
         losses: user.losses,
         winRate: user.totalMatches > 0 ? Math.round((user.wins / user.totalMatches) * 100) : 0,
-        tournamentsWon: user.tournamentsWon,
+        tournamentsWon: 0,
         currentStreak: 0, // Placeholder — will calculate from match history
         bestStreak: 0, // Placeholder — will calculate from match history
       } : null,
@@ -100,25 +100,32 @@ export class UserService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
-    // Update user fields
-    if (data.displayName !== undefined || data.bio !== undefined || data.country !== undefined || data.language !== undefined || data.avatarUrl !== undefined || data.privacySettings !== undefined) {
+    // Update user fields (country, avatarUrl are on User model)
+    if (data.country !== undefined || data.avatarUrl !== undefined) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...(data.country !== undefined ? { country: data.country } : {}),
+          ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
+        },
+      });
+    }
+
+    // Update profile fields (displayName, bio, language, privacySettings)
+    if (data.displayName !== undefined || data.bio !== undefined || data.language !== undefined || data.privacySettings !== undefined) {
       await this.prisma.profile.upsert({
         where: { userId },
         create: {
           userId,
           displayName: data.displayName,
           bio: data.bio,
-          country: data.country,
-          language: data.language,
-          avatarUrl: data.avatarUrl,
+          language: data.language ?? 'en',
           privacySettings: data.privacySettings ?? {},
         },
         update: {
           displayName: data.displayName,
           bio: data.bio,
-          country: data.country,
           language: data.language,
-          avatarUrl: data.avatarUrl,
           privacySettings: data.privacySettings,
         },
       });
@@ -139,10 +146,9 @@ export class UserService {
   }
 
   async uploadAvatar(userId: string, fileUrl: string) {
-    await this.prisma.profile.upsert({
-      where: { userId },
-      create: { userId, avatarUrl: fileUrl },
-      update: { avatarUrl: fileUrl },
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl: fileUrl },
     });
 
     return { avatarUrl: fileUrl };

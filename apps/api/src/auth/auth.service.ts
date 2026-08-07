@@ -60,7 +60,7 @@ export class AuthService {
     }
 
     // Check if phone exists
-    const existingPhone = await this.prisma.user.findUnique({
+    const existingPhone = await this.prisma.user.findFirst({
       where: { mobileNumber: data.mobileNumber },
     });
     if (existingPhone) {
@@ -204,8 +204,10 @@ export class AuthService {
         data: { isEmailVerified: true, isVerified: true },
       });
     } else if (data.type === 'verify_phone') {
+      const user = await this.prisma.user.findFirst({ where: { mobileNumber: data.identifier } });
+      if (!user) throw new NotFoundException('User not found');
       await this.prisma.user.update({
-        where: { mobileNumber: data.identifier },
+        where: { id: user.id },
         data: { isPhoneVerified: true },
       });
     }

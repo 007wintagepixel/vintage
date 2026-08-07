@@ -3,6 +3,7 @@
 // ============================================
 
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma, TransactionType, BalanceType, PaymentMethod } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -52,11 +53,11 @@ export class TransactionService {
   async createTransaction(data: {
     userId: string;
     walletId: string;
-    type: string;
+    type: TransactionType;
     amount: number;
     fee?: number;
-    balanceType: string;
-    paymentMethod?: string;
+    balanceType: BalanceType;
+    paymentMethod?: PaymentMethod;
     paymentProvider?: string;
     paymentReference?: string;
     description: string;

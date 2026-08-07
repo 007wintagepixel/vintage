@@ -34,7 +34,7 @@ export class OtpService {
     const expiresAt = new Date(Date.now() + (this.OTP_EXPIRY[type as keyof typeof this.OTP_EXPIRY] ?? 10) * 60 * 1000);
 
     // Store OTP
-    await this.prisma.otp.create({
+    await this.prisma.oTP.create({
       data: {
         userId,
         identifier,
@@ -54,7 +54,7 @@ export class OtpService {
   }
 
   async verifyOTP(identifier: string, code: string, type: string): Promise<{ valid: boolean; error?: string; email?: string }> {
-    const otp = await this.prisma.otp.findFirst({
+    const otp = await this.prisma.oTP.findFirst({
       where: {
         identifier,
         code,
@@ -70,7 +70,7 @@ export class OtpService {
     }
 
     // Mark as used
-    await this.prisma.otp.update({
+    await this.prisma.oTP.update({
       where: { id: otp.id },
       data: { usedAt: new Date() },
     });
@@ -79,7 +79,7 @@ export class OtpService {
   }
 
   async cleanupExpiredOTPs() {
-    const result = await this.prisma.otp.deleteMany({
+    const result = await this.prisma.oTP.deleteMany({
       where: {
         OR: [
           { expiresAt: { lt: new Date() } },

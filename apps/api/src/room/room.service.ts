@@ -368,7 +368,7 @@ export class RoomService {
 
     // Assign colors to players without colors
     const usedColors = room.players.map((p: any) => p.color).filter(Boolean) as string[];
-    const availableColors = ['red', 'green', 'yellow', 'blue'].filter(c => !usedColors.includes(c));
+    const availableColors = (['red', 'green', 'yellow', 'blue'] as const).filter(c => !usedColors.includes(c));
 
     let colorIndex = 0;
     for (const player of room.players) {

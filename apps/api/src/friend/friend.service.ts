@@ -94,8 +94,8 @@ export class FriendService {
 
   async getFriendRequests(userId: string, type: 'received' | 'sent' = 'received') {
     const where = type === 'received' 
-      ? { toUserId: userId, status: 'pending' }
-      : { fromUserId: userId, status: 'pending' };
+      ? { toUserId: userId, status: 'pending' as const }
+      : { fromUserId: userId, status: 'pending' as const };
 
     return this.prisma.friendRequest.findMany({
       where,

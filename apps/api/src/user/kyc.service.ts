@@ -15,7 +15,7 @@ export class KYCService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getKYCStatus(userId: string) {
-    const kyc = await this.prisma.kyc.findUnique({
+    const kyc = await this.prisma.kYC.findUnique({
       where: { userId },
       include: { documents: true },
     });
@@ -29,7 +29,7 @@ export class KYCService {
 
   async submitKYC(userId: string, data: KYCSubmission) {
     // Check if KYC already exists
-    let kyc = await this.prisma.kyc.findUnique({ where: { userId } });
+    let kyc = await this.prisma.kYC.findUnique({ where: { userId } });
 
     if (kyc && kyc.status === 'verified') {
       throw new BadRequestException('KYC already verified');
@@ -40,7 +40,7 @@ export class KYCService {
     }
 
     // Create or update KYC
-    kyc = await this.prisma.kyc.upsert({
+    kyc = await this.prisma.kYC.upsert({
       where: { userId },
       create: {
         userId,
@@ -86,13 +86,13 @@ export class KYCService {
   }
 
   async updateKYCDraft(userId: string, data: Partial<KYCSubmission>) {
-    let kyc = await this.prisma.kyc.findUnique({ where: { userId } });
+    let kyc = await this.prisma.kYC.findUnique({ where: { userId } });
 
     if (kyc && kyc.status === 'verified') {
       throw new BadRequestException('KYC already verified');
     }
 
-    kyc = await this.prisma.kyc.upsert({
+    kyc = await this.prisma.kYC.upsert({
       where: { userId },
       create: {
         userId,
@@ -117,7 +117,7 @@ export class KYCService {
   // Admin methods
   async getPendingKYC(page = 1, limit = 20) {
     const [kycs, total] = await Promise.all([
-      this.prisma.kyc.findMany({
+      this.prisma.kYC.findMany({
         where: { status: { in: ['submitted', 'under_review'] } },
         include: {
           user: { select: { id: true, username: true, email: true, fullName: true } },
@@ -127,14 +127,14 @@ export class KYCService {
         skip: (page - 1) * limit,
         take: limit,
       }),
-      this.prisma.kyc.count({ where: { status: { in: ['submitted', 'under_review'] } } }),
+      this.prisma.kYC.count({ where: { status: { in: ['submitted', 'under_review'] } } }),
     ]);
 
     return { data: kycs, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async reviewKYC(kycId: string, adminId: string, action: 'approve' | 'reject', rejectionReason?: string) {
-    const kyc = await this.prisma.kyc.findUnique({ where: { id: kycId } });
+    const kyc = await this.prisma.kYC.findUnique({ where: { id: kycId } });
     if (!kyc) throw new NotFoundException('KYC not found');
 
     if (action === 'approve') {
@@ -162,7 +162,7 @@ export class KYCService {
 
       return { success: true, message: 'KYC approved' };
     } else {
-      await this.prisma.kyc.update({
+      await this.prisma.kYC.update({
         where: { id: kycId },
         data: {
           status: 'rejected',
@@ -172,7 +172,7 @@ export class KYCService {
         },
       });
 
-      await this.prisma.kycDocument.updateMany({
+      await this.prisma.kYCDocument.updateMany({
         where: { kycId },
         data: { status: 'rejected', reviewedAt: new Date(), reviewedById: adminId, rejectionReason },
       });
@@ -182,7 +182,7 @@ export class KYCService {
   }
 
   async requestAdditionalInfo(kycId: string, adminId: string, message: string) {
-    await this.prisma.kyc.update({
+    await this.prisma.kYC.update({
       where: { id: kycId },
       data: {
         status: 'additional_info',

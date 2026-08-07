@@ -57,7 +57,7 @@ export class AdminService {
       this.prisma.tournament.count({ where: { status: 'in_progress' } }),
       this.prisma.wallet.aggregate({ _sum: { available: true } }),
       this.prisma.withdrawal.count({ where: { status: { in: ['requested', 'under_review'] } } }),
-      this.prisma.kyc.count({ where: { status: { in: ['submitted', 'under_review'] } } }),
+      this.prisma.kYC.count({ where: { status: { in: ['submitted', 'under_review'] } } }),
       this.prisma.fraudAlert.count({ where: { status: 'open' } }),
       this.calculateRevenue(dayAgo),
       this.calculateRevenue(weekAgo),
@@ -158,7 +158,7 @@ export class AdminService {
 
     if (!user) throw new NotFoundException('User not found');
 
-    const { passwordHash, sessions: _, otps, devices: __, fraudAlerts: ___, ...safe } = user;
+    const { passwordHash, ...safe } = user;
     return safe;
   }
 

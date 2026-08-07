@@ -200,7 +200,7 @@ export class AchievementService {
         // Update progress
         await this.prisma.userAchievement.upsert({
           where: { userId_achievementId: { userId, achievementId: achievement.id } },
-          create: { userId, achievementId: achievement.id, progress, isCompleted: false },
+          create: { userId, achievementId: achievement.id, unlockedAt: new Date(), progress, isCompleted: false },
           update: { progress },
         });
       }
@@ -215,20 +215,23 @@ export class AchievementService {
     });
     if (!achievement) return;
 
+    const requirement = achievement.requirement as { value: number };
+    const reward = achievement.reward as { type: string; value: number };
+
     const userAchievement = await this.prisma.userAchievement.upsert({
       where: { userId_achievementId: { userId, achievementId } },
-      create: { userId, achievementId, unlockedAt: new Date(), progress: achievement.requirement.value as number, isCompleted: true },
-      update: { unlockedAt: new Date(), progress: achievement.requirement.value as number, isCompleted: true },
+      create: { userId, achievementId, unlockedAt: new Date(), progress: requirement.value, isCompleted: true },
+      update: { unlockedAt: new Date(), progress: requirement.value, isCompleted: true },
     });
 
     // Grant reward
-    if (achievement.reward.type === 'demo_coins' && achievement.reward.value > 0) {
+    if (reward.type === 'demo_coins' && reward.value > 0) {
       try {
         await this.prisma.wallet.update({
           where: { userId },
-          data: { available: { increment: BigInt(achievement.reward.value) } },
+          data: { available: { increment: BigInt(reward.value) } },
         });
-        this.logger.log(`Granted ${achievement.reward.value} demo coins to user ${userId} for ${achievement.code}`);
+        this.logger.log(`Granted ${reward.value} demo coins to user ${userId} for ${achievement.code}`);
       } catch (error) {
         this.logger.warn(`Failed to grant demo coins to user ${userId}: ${error.message}`);
       }

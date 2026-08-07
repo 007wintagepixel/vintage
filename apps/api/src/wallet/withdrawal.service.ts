@@ -4,6 +4,7 @@
 
 import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PaymentMethod } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { WalletService } from './wallet.service';
@@ -137,7 +138,7 @@ export class WithdrawalService {
         fee: withdrawal.fee,
         netAmount: -withdrawal.netAmount,
         balanceType: 'available',
-        paymentMethod: withdrawal.destinationMethod,
+        paymentMethod: (withdrawal.destinationMethod as PaymentMethod) ?? PaymentMethod.internal,
         paymentReference: withdrawalId,
         description: `Withdrawal to ${withdrawal.destinationMethod}`,
         idempotencyKey: `txn-${withdrawalId}`,

@@ -233,7 +233,7 @@ model User {
   deletedAt         DateTime?
 
   // Relations
-  referredBy        User?     @relation("Referrals") @fields([referredById]) @references([id])
+  referredBy        User?     @relation("Referrals", fields: [referredById], references: [id])
   referrals         User[]    @relation("Referrals")
   sessions          Session[]
   otps              OTP[]
@@ -257,7 +257,12 @@ model User {
   achievements      UserAchievement[]
   devices           UserDevice[]
   fraudAlerts       FraudAlert[] @relation("UserFraudAlerts")
-  assignedFraudAlerts FraudAlert[] @relation("AssignedFraudAlerts")
+  hostedRooms       Room[] @relation("RoomHost")
+  sentRoomInvites   RoomInvite[] @relation("SentRoomInvites")
+  receivedRoomInvites RoomInvite[] @relation("ReceivedRoomInvites")
+  createdTournaments Tournament[] @relation("CreatedTournaments")
+  blockedByFriends   Friend[] @relation("FriendBlocks")
+  spectatedRooms    RoomSpectator[]
 
   @@index([email])
   @@index([username])
@@ -364,7 +369,7 @@ model KYC {
   updatedAt       DateTime    @updatedAt
 
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviewedBy      User?       @relation("KYCReviews") @fields([reviewedById]) @references([id])
+  reviewedBy      AdminUser?  @relation("KYCReviews", fields: [reviewedById], references: [id])
   documents       KYCDocument[]
 
   @@index([status])
@@ -482,7 +487,7 @@ model Withdrawal {
   createdAt         DateTime           @default(now())
 
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reviewedBy        User?              @relation("WithdrawalReviews") @fields([reviewedById]) @references([id])
+  reviewedBy        AdminUser?         @relation("WithdrawalReviews", fields: [reviewedById], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -511,6 +516,8 @@ model Match {
 
   players       MatchPlayer[]
   events        MatchEvent[]
+  tournament    Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  room          Room?       @relation(fields: [roomId], references: [id], onDelete: SetNull)
 
   @@index([mode])
   @@index([roomId])
@@ -581,10 +588,11 @@ model Room {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  host          User         @relation("RoomHost") @fields([hostId]) @references([id])
+  host          User         @relation("RoomHost", fields: [hostId], references: [id])
   players       RoomPlayer[]
   invites       RoomInvite[]
   spectators    RoomSpectator[]
+  matches       Match[]
 
   @@index([code])
   @@index([hostId])
@@ -625,8 +633,8 @@ model RoomInvite {
   createdAt     DateTime @default(now())
 
   room          Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  invitedBy     User     @relation("SentRoomInvites") @fields([invitedById]) @references([id])
-  invitedUser   User     @relation("ReceivedRoomInvites") @fields([invitedUserId]) @references([id])
+  invitedBy     User     @relation("SentRoomInvites", fields: [invitedById], references: [id])
+  invitedUser   User     @relation("ReceivedRoomInvites", fields: [invitedUserId], references: [id])
 
   @@index([roomId])
   @@index([invitedUserId])
@@ -672,7 +680,7 @@ model Tournament {
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 
-  createdBy             User              @relation("CreatedTournaments") @fields([createdById]) @references([id])
+  createdBy             User              @relation("CreatedTournaments", fields: [createdById], references: [id])
   registrations         TournamentRegistration[]
   matches               Match[]
 
@@ -721,7 +729,7 @@ model Friend {
 
   user        User         @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
   friend      User         @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
-  blockedBy   User?        @relation("FriendBlocks") @fields([blockedById]) @references([id])
+  blockedBy   User?        @relation("FriendBlocks", fields: [blockedById], references: [id])
 
   @@unique([userId, friendId])
   @@index([userId])
@@ -822,7 +830,8 @@ model ChatMessage {
 
   conversation    ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender          User             @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  replyTo         ChatMessage?     @relation("Replies") @fields([replyToId]) @references([id])
+  replyTo         ChatMessage?     @relation("Replies", fields: [replyToId], references: [id])
+  replies         ChatMessage[]    @relation("Replies")
 
   @@index([conversationId])
   @@index([senderId])
@@ -890,6 +899,8 @@ model AdminUser {
   reviewedKYC KYC[]       @relation("KYCReviews")
   reviewedWithdrawals Withdrawal[] @relation("WithdrawalReviews")
   assignedFraudAlerts FraudAlert[] @relation("AssignedFraudAlerts")
+  resolvedFraudAlerts FraudAlert[] @relation("ResolvedFraudAlerts")
+  updatedGameSettings GameSettings[]
 
   @@map("admin_users")
 }
@@ -930,8 +941,8 @@ model FraudAlert {
   createdAt     DateTime             @default(now())
 
   user          User                 @relation("UserFraudAlerts", fields: [userId], references: [id], onDelete: Cascade)
-  assignedTo    AdminUser?           @relation("AssignedFraudAlerts") @fields([assignedToId]) @references([id])
-  resolvedBy    AdminUser?           @relation("ResolvedFraudAlerts") @fields([resolvedById]) @references([id])
+  assignedTo    AdminUser?           @relation("AssignedFraudAlerts", fields: [assignedToId], references: [id])
+  resolvedBy    AdminUser?           @relation("ResolvedFraudAlerts", fields: [resolvedById], references: [id])
 
   @@index([userId])
   @@index([type])

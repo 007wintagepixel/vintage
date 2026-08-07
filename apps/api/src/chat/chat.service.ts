@@ -227,7 +227,7 @@ export class ChatService {
         content: data.content,
         type: data.type,
         replyToId: data.replyTo,
-        metadata: data.metadata,
+        metadata: data.metadata as any,
       },
       include: {
         sender: { select: { id: true, username: true, avatarUrl: true } },
