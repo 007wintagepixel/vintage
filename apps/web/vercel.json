@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd ../.. && pnpm install",
-  "buildCommand": "cd ../.. && pnpm --filter @ludo-nexus/web run build",
-  "outputDirectory": ".next",
   "framework": "nextjs",
   "regions": ["bom1"]
 }
