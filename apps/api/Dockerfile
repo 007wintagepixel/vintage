@@ -52,6 +52,9 @@ RUN pnpm --filter @ludo-nexus/api run db:generate
 # Build the application
 RUN pnpm --filter @ludo-nexus/api run build
 
+# Copy prisma migration files for deploy step
+COPY apps/api/prisma ./apps/api/prisma
+
 # ============================================
 # Production stage
 # ============================================
@@ -70,6 +73,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/apps/api/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/package.json ./package.json
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/apps/api/prisma ./prisma
+COPY --from=builder --chown=nestjs:nodejs /app/apps/api/prisma ./apps/api/prisma
 
 USER nestjs
 

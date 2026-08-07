@@ -51,6 +51,7 @@ ludo-nexus/
 - **Database:** PostgreSQL 15, Redis 7
 - **Game Engine:** Pure TypeScript (server-authoritative)
 - **Monorepo:** pnpm workspaces + Turborepo
+- **Deploy:** Vercel (web) + Render (API + DB + Redis)
 
 ## Game Modes
 
@@ -65,7 +66,7 @@ Access at `/admin` — manage users, matches, transactions, tournaments, and aud
 
 ## Deployment
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for step-by-step deployment to Vercel + Railway.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for step-by-step deployment to Vercel + Render.
 
 ## Demo Mode
 
