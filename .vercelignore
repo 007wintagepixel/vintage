@@ -1,0 +1,5 @@
+node_modules
+apps/api
+apps/mobile
+packages/game-engine/coverage
+.git
