@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   Users,
   Clock,
@@ -20,47 +20,62 @@ import {
   Crown,
   Wifi,
   Swords,
-  ChevronRight,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface RoomPlayer {
   id: string;
   username: string;
   avatar: string;
-  color: 'red' | 'green' | 'yellow' | 'blue';
+  color: "red" | "green" | "yellow" | "blue";
   isHost: boolean;
   isReady: boolean;
   isOnline: boolean;
 }
 
 const colorMap = {
-  red: { bg: 'bg-player-red', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.4)]', text: 'text-player-red' },
-  green: { bg: 'bg-player-green', glow: 'shadow-[0_0_15px_rgba(34,197,94,0.4)]', text: 'text-player-green' },
-  yellow: { bg: 'bg-player-yellow', glow: 'shadow-[0_0_15px_rgba(234,179,8,0.4)]', text: 'text-player-yellow' },
-  blue: { bg: 'bg-player-blue', glow: 'shadow-[0_0_15px_rgba(59,130,246,0.4)]', text: 'text-player-blue' },
+  red: {
+    bg: "bg-player-red",
+    glow: "shadow-[0_0_15px_rgba(239,68,68,0.4)]",
+    text: "text-player-red",
+  },
+  green: {
+    bg: "bg-player-green",
+    glow: "shadow-[0_0_15px_rgba(34,197,94,0.4)]",
+    text: "text-player-green",
+  },
+  yellow: {
+    bg: "bg-player-yellow",
+    glow: "shadow-[0_0_15px_rgba(234,179,8,0.4)]",
+    text: "text-player-yellow",
+  },
+  blue: {
+    bg: "bg-player-blue",
+    glow: "shadow-[0_0_15px_rgba(59,130,246,0.4)]",
+    text: "text-player-blue",
+  },
 };
 
 export default function RoomLobbyPage() {
   const params = useParams();
   const router = useRouter();
-  const roomCode = (params?.roomCode as string) || 'UNKNOWN';
+  const roomCode = (params?.roomCode as string) || "UNKNOWN";
 
   const [copied, setCopied] = useState(false);
   const [players, setPlayers] = useState<RoomPlayer[]>([
     {
-      id: '1',
-      username: 'You',
-      avatar: 'P1',
-      color: 'red',
+      id: "1",
+      username: "You",
+      avatar: "P1",
+      color: "red",
       isHost: true,
       isReady: true,
       isOnline: true,
     },
     {
-      id: '2',
-      username: 'PlayerTwo',
-      avatar: 'P2',
-      color: 'blue',
+      id: "2",
+      username: "PlayerTwo",
+      avatar: "P2",
+      color: "blue",
       isHost: false,
       isReady: true,
       isOnline: true,
@@ -75,10 +90,10 @@ export default function RoomLobbyPage() {
         setPlayers((prev) => [
           ...prev,
           {
-            id: '3',
-            username: 'PlayerThree',
-            avatar: 'P3',
-            color: 'green',
+            id: "3",
+            username: "PlayerThree",
+            avatar: "P3",
+            color: "green",
             isHost: false,
             isReady: false,
             isOnline: true,
@@ -95,17 +110,17 @@ export default function RoomLobbyPage() {
   const matchId = `match-${roomCode.toLowerCase()}`;
 
   const roomSettings = {
-    name: 'Friday Night Ludo',
-    mode: 'classic' as const,
+    name: "Friday Night Ludo",
+    mode: "classic" as const,
     entryFee: 100,
-    privacy: 'private' as const,
+    privacy: "private" as const,
   };
 
   const handleShare = async () => {
     const shareText = `Join my Ludo Nexus room! Code: ${roomCode}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Ludo Nexus Room', text: shareText });
+        await navigator.share({ title: "Ludo Nexus Room", text: shareText });
       } else {
         await navigator.clipboard.writeText(roomCode);
         setCopied(true);
@@ -127,7 +142,7 @@ export default function RoomLobbyPage() {
   };
 
   const handleLeave = () => {
-    router.push('/game-modes');
+    router.push("/game-modes");
   };
 
   const emptySlots = maxPlayers - joinedCount;
@@ -208,7 +223,9 @@ export default function RoomLobbyPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-text-primary truncate">{player.username}</span>
+                          <span className="font-medium text-text-primary truncate">
+                            {player.username}
+                          </span>
                           {player.isHost && (
                             <Crown className="w-4 h-4 text-secondary-glow flex-shrink-0" />
                           )}
@@ -249,14 +266,22 @@ export default function RoomLobbyPage() {
                   <div className="flex items-center gap-4">
                     <motion.div
                       animate={{ opacity: [0.3, 0.6, 0.3] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: index * 0.3 }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: index * 0.3,
+                      }}
                       className="w-14 h-14 rounded-xl bg-surface-tertiary border-2 border-dashed border-surface-border flex items-center justify-center"
                     >
                       <Users className="w-6 h-6 text-text-muted" />
                     </motion.div>
                     <div className="flex-1">
-                      <div className="font-medium text-text-muted">Waiting for player...</div>
-                      <div className="text-body-sm text-text-muted mt-1">Slot {joinedCount + index + 1} of {maxPlayers}</div>
+                      <div className="font-medium text-text-muted">
+                        Waiting for player...
+                      </div>
+                      <div className="text-body-sm text-text-muted mt-1">
+                        Slot {joinedCount + index + 1} of {maxPlayers}
+                      </div>
                     </div>
                     <Wifi className="w-5 h-5 text-text-muted/30" />
                   </div>
@@ -271,11 +296,18 @@ export default function RoomLobbyPage() {
                   <Share2 className="w-5 h-5 text-primary-glow" />
                 </div>
                 <div>
-                  <div className="text-body-sm font-medium">Invite your friends</div>
-                  <div className="text-caption text-text-muted">Share the code {roomCode} or this link</div>
+                  <div className="text-body-sm font-medium">
+                    Invite your friends
+                  </div>
+                  <div className="text-caption text-text-muted">
+                    Share the code {roomCode} or this link
+                  </div>
                 </div>
               </div>
-              <button onClick={handleShare} className="btn-secondary gap-2 text-body-sm">
+              <button
+                onClick={handleShare}
+                className="btn-secondary gap-2 text-body-sm"
+              >
                 <Share2 className="w-4 h-4" />
                 Share
               </button>
@@ -301,7 +333,9 @@ export default function RoomLobbyPage() {
                 <span className="text-body-sm text-text-muted flex items-center gap-2">
                   <Clock className="w-4 h-4" /> Mode
                 </span>
-                <span className="text-body-sm font-medium capitalize">{roomSettings.mode}</span>
+                <span className="text-body-sm font-medium capitalize">
+                  {roomSettings.mode}
+                </span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-surface-border">
                 <span className="text-body-sm text-text-muted flex items-center gap-2">
@@ -314,25 +348,31 @@ export default function RoomLobbyPage() {
                   <Coins className="w-4 h-4" /> Entry Fee
                 </span>
                 <span className="text-body-sm font-medium">
-                  {roomSettings.entryFee === 0 ? 'Free' : `${roomSettings.entryFee} coins`}
+                  {roomSettings.entryFee === 0
+                    ? "Free"
+                    : `${roomSettings.entryFee} coins`}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-body-sm text-text-muted flex items-center gap-2">
-                  {roomSettings.privacy === 'private' ? (
+                  {roomSettings.privacy === "private" ? (
                     <Lock className="w-4 h-4" />
                   ) : (
                     <Globe className="w-4 h-4" />
-                  )}{' '}
+                  )}{" "}
                   Privacy
                 </span>
-                <span className="text-body-sm font-medium capitalize">{roomSettings.privacy}</span>
+                <span className="text-body-sm font-medium capitalize">
+                  {roomSettings.privacy}
+                </span>
               </div>
             </div>
 
             {/* Pot Info */}
             <div className="mt-4 p-4 glass-card rounded-xl text-center">
-              <div className="text-caption text-text-muted mb-1">Total Prize Pot</div>
+              <div className="text-caption text-text-muted mb-1">
+                Total Prize Pot
+              </div>
               <div className="font-display text-display-sm gradient-text-gold">
                 {roomSettings.entryFee * maxPlayers} coins
               </div>
@@ -344,7 +384,9 @@ export default function RoomLobbyPage() {
             <Link
               href={`/game/${matchId}`}
               className={`w-full gap-2 text-body-lg py-4 ${
-                canStart ? 'btn-primary' : 'btn opacity-50 cursor-not-allowed pointer-events-none'
+                canStart
+                  ? "btn-primary"
+                  : "btn opacity-50 cursor-not-allowed pointer-events-none"
               }`}
               aria-disabled={!canStart}
             >
@@ -354,11 +396,14 @@ export default function RoomLobbyPage() {
             {!canStart && (
               <p className="text-caption text-text-muted text-center">
                 {joinedCount < 2
-                  ? 'Need at least 2 players to start'
-                  : 'Waiting for all players to be ready'}
+                  ? "Need at least 2 players to start"
+                  : "Waiting for all players to be ready"}
               </p>
             )}
-            <button onClick={handleShare} className="btn-secondary w-full gap-2">
+            <button
+              onClick={handleShare}
+              className="btn-secondary w-full gap-2"
+            >
               <Share2 className="w-4 h-4" />
               Share Room Code
             </button>
@@ -378,7 +423,6 @@ export default function RoomLobbyPage() {
                 <Swords className="w-4 h-4 text-primary-glow" />
                 Quick Match
               </span>
-              <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
         </motion.div>

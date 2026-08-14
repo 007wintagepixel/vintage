@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Swords,
   Users,
@@ -15,25 +15,49 @@ import {
   ArrowRight,
   Clock,
   Activity,
-} from 'lucide-react';
+} from "lucide-react";
 
-type GameMode = '1v1' | '2v2' | '4player';
+type GameMode = "1v1" | "2v2" | "4player";
 
-const gameModes: { id: GameMode; label: string; players: string; icon: typeof User; description: string }[] = [
-  { id: '1v1', label: '1 v 1', players: '2 players', icon: User, description: 'Head-to-head duel' },
-  { id: '2v2', label: '2 v 2', players: '4 players', icon: Users, description: 'Team battle' },
-  { id: '4player', label: 'Free-for-All', players: '4 players', icon: Crown, description: 'Last one standing' },
+const gameModes: {
+  id: GameMode;
+  label: string;
+  players: string;
+  icon: typeof User;
+  description: string;
+}[] = [
+  {
+    id: "1v1",
+    label: "1 v 1",
+    players: "2 players",
+    icon: User,
+    description: "Head-to-head duel",
+  },
+  {
+    id: "2v2",
+    label: "2 v 2",
+    players: "4 players",
+    icon: Users,
+    description: "Team battle",
+  },
+  {
+    id: "4player",
+    label: "Free-for-All",
+    players: "4 players",
+    icon: Crown,
+    description: "Last one standing",
+  },
 ];
 
 export default function MatchmakingPage() {
-  const [selectedMode, setSelectedMode] = useState<GameMode>('1v1');
+  const [selectedMode, setSelectedMode] = useState<GameMode>("1v1");
   const [isSearching, setIsSearching] = useState(false);
   const [matched, setMatched] = useState(false);
   const [queueTime, setQueueTime] = useState(0);
-  const [matchId, setMatchId] = useState<string>('');
+  const [matchId, setMatchId] = useState<string>("");
 
   const playersInQueue = 247;
-  const estimatedWait = '~15 seconds';
+  const estimatedWait = "~15 seconds";
 
   useEffect(() => {
     if (!isSearching) {
@@ -60,7 +84,7 @@ export default function MatchmakingPage() {
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
-    return `${m}:${sec.toString().padStart(2, '0')}`;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
   const handleStartSearch = () => {
@@ -83,14 +107,22 @@ export default function MatchmakingPage() {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
       >
         <div>
-          <h1 className="font-display text-display-md gradient-text">Finding Opponents</h1>
-          <p className="text-text-secondary mt-1">Jump into a match with players of your skill level</p>
+          <h1 className="font-display text-display-md gradient-text">
+            Finding Opponents
+          </h1>
+          <p className="text-text-secondary mt-1">
+            Jump into a match with players of your skill level
+          </p>
         </div>
         <div className="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
           <Activity className="w-5 h-5 text-accent-green animate-pulse" />
           <div>
-            <div className="text-body-sm font-medium text-text-primary">{playersInQueue} in queue</div>
-            <div className="text-caption text-text-muted">Live players online</div>
+            <div className="text-body-sm font-medium text-text-primary">
+              {playersInQueue} in queue
+            </div>
+            <div className="text-caption text-text-muted">
+              Live players online
+            </div>
           </div>
         </div>
       </motion.div>
@@ -108,17 +140,22 @@ export default function MatchmakingPage() {
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
               className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-accent-green to-primary-glow flex items-center justify-center shadow-glow"
             >
               <CheckCircle2 className="w-12 h-12 text-text-inverse" />
             </motion.div>
-            <h2 className="font-display text-display-sm gradient-text mb-3">Opponent Found!</h2>
+            <h2 className="font-display text-display-sm gradient-text mb-3">
+              Opponent Found!
+            </h2>
             <p className="text-text-secondary text-body-lg mb-8">
               A player has been matched with you. Get ready to play!
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href={`/game/${matchId}`} className="btn-primary gap-2 text-body-lg px-8 py-4">
+              <Link
+                href={`/game/${matchId}`}
+                className="btn-primary gap-2 text-body-lg px-8 py-4"
+              >
                 <Swords className="w-5 h-5" />
                 Join Match
                 <ArrowRight className="w-5 h-5" />
@@ -147,7 +184,9 @@ export default function MatchmakingPage() {
               transition={{ delay: 0.1 }}
               className="glass-card-strong rounded-2xl p-6"
             >
-              <h2 className="font-display text-heading-md mb-6">Select Game Mode</h2>
+              <h2 className="font-display text-heading-md mb-6">
+                Select Game Mode
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {gameModes.map((mode) => (
                   <button
@@ -156,30 +195,38 @@ export default function MatchmakingPage() {
                     disabled={isSearching}
                     className={`glass-card-hover p-6 rounded-2xl text-left transition-all ${
                       selectedMode === mode.id
-                        ? 'border-primary-glow shadow-glow bg-primary-glow/5'
-                        : ''
-                    } ${isSearching ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        ? "border-primary-glow shadow-glow bg-primary-glow/5"
+                        : ""
+                    } ${isSearching ? "opacity-50 cursor-not-allowed" : ""}`}
                   >
                     <div className="flex items-center gap-3 mb-4">
                       <div
                         className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                           selectedMode === mode.id
-                            ? 'bg-gradient-to-br from-primary-glow to-accent-magenta'
-                            : 'bg-surface-tertiary'
+                            ? "bg-gradient-to-br from-primary-glow to-accent-magenta"
+                            : "bg-surface-tertiary"
                         }`}
                       >
                         <mode.icon
                           className={`w-6 h-6 ${
-                            selectedMode === mode.id ? 'text-text-inverse' : 'text-text-secondary'
+                            selectedMode === mode.id
+                              ? "text-text-inverse"
+                              : "text-text-secondary"
                           }`}
                         />
                       </div>
                       <div>
-                        <div className="font-display text-heading-sm text-text-primary">{mode.label}</div>
-                        <div className="text-caption text-text-muted">{mode.players}</div>
+                        <div className="font-display text-heading-sm text-text-primary">
+                          {mode.label}
+                        </div>
+                        <div className="text-caption text-text-muted">
+                          {mode.players}
+                        </div>
                       </div>
                     </div>
-                    <p className="text-body-sm text-text-secondary">{mode.description}</p>
+                    <p className="text-body-sm text-text-secondary">
+                      {mode.description}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -197,17 +244,31 @@ export default function MatchmakingPage() {
                   {/* Animated radar background */}
                   <motion.div
                     animate={{ scale: [1, 2.5], opacity: [0.4, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeOut",
+                    }}
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-2 border-primary-glow"
                   />
                   <motion.div
                     animate={{ scale: [1, 2.5], opacity: [0.4, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeOut', delay: 0.5 }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeOut",
+                      delay: 0.5,
+                    }}
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-2 border-primary-glow"
                   />
                   <motion.div
                     animate={{ scale: [1, 2.5], opacity: [0.4, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: 'easeOut', delay: 1 }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeOut",
+                      delay: 1,
+                    }}
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-2 border-primary-glow"
                   />
                 </>
@@ -215,7 +276,10 @@ export default function MatchmakingPage() {
 
               <motion.div
                 animate={isSearching ? { scale: [1, 1.1, 1] } : {}}
-                transition={{ duration: 1.5, repeat: isSearching ? Infinity : 0 }}
+                transition={{
+                  duration: 1.5,
+                  repeat: isSearching ? Infinity : 0,
+                }}
                 className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary-glow to-accent-magenta flex items-center justify-center shadow-glow relative z-10"
               >
                 {isSearching ? (
@@ -226,19 +290,21 @@ export default function MatchmakingPage() {
               </motion.div>
 
               <h2 className="font-display text-heading-lg mb-2 relative z-10">
-                {isSearching ? 'Searching for opponents...' : 'Ready to Play'}
+                {isSearching ? "Searching for opponents..." : "Ready to Play"}
               </h2>
               <p className="text-text-secondary text-body relative z-10 mb-6">
                 {isSearching
                   ? `Mode: ${gameModes.find((m) => m.id === selectedMode)?.label}`
-                  : 'Pick a game mode and start matchmaking'}
+                  : "Pick a game mode and start matchmaking"}
               </p>
 
               {/* Queue Stats */}
               <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-8 relative z-10">
                 <div className="glass-card p-4 rounded-xl">
                   <Users className="w-5 h-5 text-primary-glow mx-auto mb-2" />
-                  <div className="font-display text-heading-md">{playersInQueue}</div>
+                  <div className="font-display text-heading-md">
+                    {playersInQueue}
+                  </div>
                   <div className="text-caption text-text-muted">In Queue</div>
                 </div>
                 <div className="glass-card p-4 rounded-xl">
@@ -247,25 +313,33 @@ export default function MatchmakingPage() {
                     {isSearching ? formatTime(queueTime) : estimatedWait}
                   </div>
                   <div className="text-caption text-text-muted">
-                    {isSearching ? 'Elapsed' : 'Est. Wait'}
+                    {isSearching ? "Elapsed" : "Est. Wait"}
                   </div>
                 </div>
                 <div className="glass-card p-4 rounded-xl">
                   <Zap className="w-5 h-5 text-accent-magenta mx-auto mb-2" />
                   <div className="font-display text-heading-md">Fast</div>
-                  <div className="text-caption text-text-muted">Match Speed</div>
+                  <div className="text-caption text-text-muted">
+                    Match Speed
+                  </div>
                 </div>
               </div>
 
               {/* Action Button */}
               <div className="relative z-10">
                 {isSearching ? (
-                  <button onClick={handleCancel} className="btn-danger gap-2 px-8 py-4 text-body-lg">
+                  <button
+                    onClick={handleCancel}
+                    className="btn-danger gap-2 px-8 py-4 text-body-lg"
+                  >
                     <X className="w-5 h-5" />
                     Cancel Search
                   </button>
                 ) : (
-                  <button onClick={handleStartSearch} className="btn-primary gap-2 px-8 py-4 text-body-lg">
+                  <button
+                    onClick={handleStartSearch}
+                    className="btn-primary gap-2 px-8 py-4 text-body-lg"
+                  >
                     <Swords className="w-5 h-5" />
                     Start Matchmaking
                   </button>
@@ -283,15 +357,31 @@ export default function MatchmakingPage() {
         transition={{ delay: 0.3 }}
         className="glass-card rounded-2xl p-6"
       >
-        <h3 className="font-display text-heading-sm mb-4 text-text-secondary">Matchmaking Tips</h3>
+        <h3 className="font-display text-heading-sm mb-4 text-text-secondary">
+          Matchmaking Tips
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: Zap, text: 'Queue during peak hours for faster matches', color: 'text-primary-glow' },
-            { icon: Crown, text: 'Win streaks increase your MMR and rewards', color: 'text-secondary-glow' },
-            { icon: Users, text: 'Invite friends to skip the queue entirely', color: 'text-accent-magenta' },
+            {
+              icon: Zap,
+              text: "Queue during peak hours for faster matches",
+              color: "text-primary-glow",
+            },
+            {
+              icon: Crown,
+              text: "Win streaks increase your MMR and rewards",
+              color: "text-secondary-glow",
+            },
+            {
+              icon: Users,
+              text: "Invite friends to skip the queue entirely",
+              color: "text-accent-magenta",
+            },
           ].map((tip, i) => (
             <div key={i} className="flex items-start gap-3">
-              <tip.icon className={`w-5 h-5 mt-0.5 ${tip.color} flex-shrink-0`} />
+              <tip.icon
+                className={`w-5 h-5 mt-0.5 ${tip.color} flex-shrink-0`}
+              />
               <p className="text-body-sm text-text-secondary">{tip.text}</p>
             </div>
           ))}

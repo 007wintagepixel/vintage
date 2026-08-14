@@ -2,12 +2,63 @@
 // Admin Service
 // ============================================
 
-import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { KYCService } from '../user/kyc.service';
-import { WithdrawalService } from '../wallet/withdrawal.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { KYCService } from "../user/kyc.service";
+import { WithdrawalService } from "../wallet/withdrawal.service";
+
+export interface UserFilters {
+  search?: string;
+  kycStatus?: string;
+  isActive?: boolean;
+  isBanned?: boolean;
+}
+
+export interface MatchFilters {
+  status?: string;
+  mode?: string;
+  userId?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface TournamentFilters {
+  status?: string;
+}
+
+export interface TransactionFilters {
+  type?: string;
+  status?: string;
+  userId?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface WithdrawalFilters {
+  status?: string;
+}
+
+export interface FraudAlertFilters {
+  status?: string;
+  severity?: string;
+  type?: string;
+}
+
+export interface AuditLogFilters {
+  adminId?: string;
+  userId?: string;
+  action?: string;
+  resourceType?: string;
+  fromDate?: string;
+  toDate?: string;
+}
+
+export interface GameSettingsUpdate {
+  key: string;
+  value: any;
+}
 
 @Injectable()
 export class AdminService {
@@ -48,17 +99,27 @@ export class AdminService {
       revenue30d,
     ] = await Promise.all([
       this.prisma.user.count({ where: { deletedAt: null } }),
-      this.prisma.user.count({ where: { lastLoginAt: { gte: dayAgo }, deletedAt: null } }),
-      this.prisma.user.count({ where: { lastLoginAt: { gte: weekAgo }, deletedAt: null } }),
-      this.prisma.user.count({ where: { lastLoginAt: { gte: monthAgo }, deletedAt: null } }),
+      this.prisma.user.count({
+        where: { lastLoginAt: { gte: dayAgo }, deletedAt: null },
+      }),
+      this.prisma.user.count({
+        where: { lastLoginAt: { gte: weekAgo }, deletedAt: null },
+      }),
+      this.prisma.user.count({
+        where: { lastLoginAt: { gte: monthAgo }, deletedAt: null },
+      }),
       this.prisma.match.count(),
       this.prisma.match.count({ where: { createdAt: { gte: dayAgo } } }),
       this.prisma.tournament.count(),
-      this.prisma.tournament.count({ where: { status: 'in_progress' } }),
+      this.prisma.tournament.count({ where: { status: "in_progress" } }),
       this.prisma.wallet.aggregate({ _sum: { available: true } }),
-      this.prisma.withdrawal.count({ where: { status: { in: ['requested', 'under_review'] } } }),
-      this.prisma.kYC.count({ where: { status: { in: ['submitted', 'under_review'] } } }),
-      this.prisma.fraudAlert.count({ where: { status: 'open' } }),
+      this.prisma.withdrawal.count({
+        where: { status: { in: ["requested", "under_review"] } },
+      }),
+      this.prisma.kYC.count({
+        where: { status: { in: ["submitted", "under_review"] } },
+      }),
+      this.prisma.fraudAlert.count({ where: { status: "open" } }),
       this.calculateRevenue(dayAgo),
       this.calculateRevenue(weekAgo),
       this.calculateRevenue(monthAgo),
@@ -86,7 +147,7 @@ export class AdminService {
   private async calculateRevenue(since: Date) {
     const transactions = await this.prisma.transaction.findMany({
       where: {
-        type: { in: ['deposit', 'withdrawal', 'match', 'tournament'] },
+        type: { in: ["deposit", "withdrawal", "match", "tournament"] },
         createdAt: { gte: since },
       },
       select: { amount: true, fee: true },
@@ -103,18 +164,19 @@ export class AdminService {
   // USER MANAGEMENT
   // ============================================
 
-  async getUsers(filters: any = {}, page = 1, limit = 50) {
+  async getUsers(filters: UserFilters = {}, page = 1, limit = 50) {
     const where: any = { deletedAt: null };
 
     if (filters.search) {
       where.OR = [
-        { username: { contains: filters.search, mode: 'insensitive' } },
-        { email: { contains: filters.search, mode: 'insensitive' } },
-        { fullName: { contains: filters.search, mode: 'insensitive' } },
+        { username: { contains: filters.search, mode: "insensitive" } },
+        { email: { contains: filters.search, mode: "insensitive" } },
+        { fullName: { contains: filters.search, mode: "insensitive" } },
       ];
     }
     if (filters.kycStatus) where.kycStatus = filters.kycStatus;
-    if (filters.isActive !== undefined) where.deletedAt = filters.isActive ? null : { not: null };
+    if (filters.isActive !== undefined)
+      where.deletedAt = filters.isActive ? null : { not: null };
     if (filters.isBanned) {
       // Would need a banned field
     }
@@ -125,9 +187,11 @@ export class AdminService {
         include: {
           wallet: true,
           kyc: true,
-          _count: { select: { matches: true, friends: true, tournaments: true } },
+          _count: {
+            select: { matches: true, friends: true, tournaments: true },
+          },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -136,7 +200,14 @@ export class AdminService {
 
     return {
       data: users.map((u: any) => {
-        const { passwordHash, sessions, otps, devices, fraudAlerts, ...safe } = u;
+        const { passwordHash, sessions, otps, devices, fraudAlerts, ...safe } =
+          u;
+        // Suppress unused vars
+        void passwordHash;
+        void sessions;
+        void otps;
+        void devices;
+        void fraudAlerts;
         return safe;
       }),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
@@ -150,15 +221,24 @@ export class AdminService {
         profile: true,
         wallet: true,
         kyc: { include: { documents: true } },
-        sessions: { orderBy: { createdAt: 'desc' }, take: 10 },
-        devices: { orderBy: { lastUsedAt: 'desc' } },
-        _count: { select: { matches: true, friends: true, tournaments: true, achievements: true } },
+        sessions: { orderBy: { createdAt: "desc" }, take: 10 },
+        devices: { orderBy: { lastUsedAt: "desc" } },
+        _count: {
+          select: {
+            matches: true,
+            friends: true,
+            tournaments: true,
+            achievements: true,
+          },
+        },
       },
     });
 
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     const { passwordHash, ...safe } = user;
+    // Suppress unused var
+    void passwordHash;
     return safe;
   }
 
@@ -168,7 +248,7 @@ export class AdminService {
       data: { deletedAt: new Date() }, // Soft delete as ban
     });
 
-    await this.logAudit(adminId, 'user.ban', 'user', userId, null, { reason });
+    await this.logAudit(adminId, "user.ban", "user", userId, null, { reason });
     return { success: true };
   }
 
@@ -178,7 +258,14 @@ export class AdminService {
       data: { deletedAt: null },
     });
 
-    await this.logAudit(adminId, 'user.unban', 'user', userId, { deletedAt: new Date() }, null);
+    await this.logAudit(
+      adminId,
+      "user.unban",
+      "user",
+      userId,
+      { deletedAt: new Date() },
+      null,
+    );
     return { success: true };
   }
 
@@ -186,7 +273,7 @@ export class AdminService {
   // MATCH MANAGEMENT
   // ============================================
 
-  async getMatches(filters: any = {}, page = 1, limit = 50) {
+  async getMatches(filters: MatchFilters = {}, page = 1, limit = 50) {
     const where: any = {};
 
     if (filters.status) where.status = filters.status;
@@ -204,18 +291,23 @@ export class AdminService {
       this.prisma.match.findMany({
         where,
         include: {
-          players: { select: { userId: true, color: true, isBot: true, finalRank: true } },
+          players: {
+            select: { userId: true, color: true, isBot: true, finalRank: true },
+          },
           room: { select: { code: true } },
           tournament: { select: { name: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.match.count({ where }),
     ]);
 
-    return { data: matches, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: matches,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async getMatchReplay(matchId: string) {
@@ -223,11 +315,11 @@ export class AdminService {
       where: { id: matchId },
       include: {
         players: true,
-        events: { orderBy: { sequence: 'asc' } },
+        events: { orderBy: { sequence: "asc" } },
       },
     });
 
-    if (!match) throw new NotFoundException('Match not found');
+    if (!match) throw new NotFoundException("Match not found");
     return match;
   }
 
@@ -235,7 +327,7 @@ export class AdminService {
   // TOURNAMENT MANAGEMENT
   // ============================================
 
-  async getTournaments(filters: any = {}, page = 1, limit = 50) {
+  async getTournaments(filters: TournamentFilters = {}, page = 1, limit = 50) {
     const where: any = {};
     if (filters.status) where.status = filters.status;
 
@@ -246,14 +338,17 @@ export class AdminService {
           createdBy: { select: { id: true, username: true } },
           _count: { select: { registrations: true, matches: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.tournament.count({ where }),
     ]);
 
-    return { data: tournaments, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: tournaments,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async createTournament(adminId: string, data: any) {
@@ -264,7 +359,9 @@ export class AdminService {
         rules: data.rules as any,
         registrationOpensAt: new Date(data.registrationOpensAt),
         registrationClosesAt: new Date(data.registrationClosesAt),
-        checkInStartsAt: data.checkInStartsAt ? new Date(data.checkInStartsAt) : null,
+        checkInStartsAt: data.checkInStartsAt
+          ? new Date(data.checkInStartsAt)
+          : null,
         checkInEndsAt: data.checkInEndsAt ? new Date(data.checkInEndsAt) : null,
         createdById: adminId,
       },
@@ -275,7 +372,11 @@ export class AdminService {
   // TRANSACTION MANAGEMENT
   // ============================================
 
-  async getTransactions(filters: any = {}, page = 1, limit = 50) {
+  async getTransactions(
+    filters: TransactionFilters = {},
+    page = 1,
+    limit = 50,
+  ) {
     const where: any = {};
 
     if (filters.type) where.type = filters.type;
@@ -290,8 +391,10 @@ export class AdminService {
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
         where,
-        include: { user: { select: { id: true, username: true, email: true } } },
-        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { id: true, username: true, email: true } },
+        },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -299,7 +402,12 @@ export class AdminService {
     ]);
 
     return {
-      data: transactions.map((t: any) => ({ ...t, amount: Number(t.amount), fee: Number(t.fee), netAmount: Number(t.netAmount) })),
+      data: transactions.map((t: any) => ({
+        ...t,
+        amount: Number(t.amount),
+        fee: Number(t.fee),
+        netAmount: Number(t.netAmount),
+      })),
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
@@ -308,16 +416,28 @@ export class AdminService {
   // WITHDRAWAL MANAGEMENT
   // ============================================
 
-  async getWithdrawals(filters: any = {}, page = 1, limit = 50) {
-    return this.withdrawalService.getAllWithdrawals(filters.status, page, limit);
+  async getWithdrawals(filters: WithdrawalFilters = {}, page = 1, limit = 50) {
+    return this.withdrawalService.getAllWithdrawals(
+      filters.status,
+      page,
+      limit,
+    );
   }
 
   async approveWithdrawal(withdrawalId: string, adminId: string) {
     return this.withdrawalService.approveWithdrawal(withdrawalId, adminId);
   }
 
-  async rejectWithdrawal(withdrawalId: string, adminId: string, reason: string) {
-    return this.withdrawalService.rejectWithdrawal(withdrawalId, adminId, reason);
+  async rejectWithdrawal(
+    withdrawalId: string,
+    adminId: string,
+    reason: string,
+  ) {
+    return this.withdrawalService.rejectWithdrawal(
+      withdrawalId,
+      adminId,
+      reason,
+    );
   }
 
   // ============================================
@@ -328,7 +448,12 @@ export class AdminService {
     return this.kycService.getPendingKYC(page, limit);
   }
 
-  async reviewKYC(kycId: string, adminId: string, action: 'approve' | 'reject', rejectionReason?: string) {
+  async reviewKYC(
+    kycId: string,
+    adminId: string,
+    action: "approve" | "reject",
+    rejectionReason?: string,
+  ) {
     return this.kycService.reviewKYC(kycId, adminId, action, rejectionReason);
   }
 
@@ -340,7 +465,7 @@ export class AdminService {
   // FRAUD ALERTS
   // ============================================
 
-  async getFraudAlerts(filters: any = {}, page = 1, limit = 50) {
+  async getFraudAlerts(filters: FraudAlertFilters = {}, page = 1, limit = 50) {
     const where: any = {};
     if (filters.status) where.status = filters.status;
     if (filters.severity) where.severity = filters.severity;
@@ -353,22 +478,31 @@ export class AdminService {
           user: { select: { id: true, username: true, email: true } },
           assignedTo: { select: { id: true, username: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.fraudAlert.count({ where }),
     ]);
 
-    return { data: alerts, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: alerts,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
-  async updateFraudAlert(alertId: string, adminId: string, data: { status?: string; assignedToId?: string }) {
-    const alert = await this.prisma.fraudAlert.findUnique({ where: { id: alertId } });
-    if (!alert) throw new NotFoundException('Fraud alert not found');
+  async updateFraudAlert(
+    alertId: string,
+    adminId: string,
+    data: { status?: string; assignedToId?: string },
+  ) {
+    const alert = await this.prisma.fraudAlert.findUnique({
+      where: { id: alertId },
+    });
+    if (!alert) throw new NotFoundException("Fraud alert not found");
 
     const updateData: any = { ...data };
-    if (data.status === 'resolved') {
+    if (data.status === "resolved") {
       updateData.resolvedAt = new Date();
       updateData.resolvedById = adminId;
     }
@@ -390,17 +524,27 @@ export class AdminService {
 
     return this.prisma.gameSettings.findMany({
       where,
-      orderBy: { category: 'asc' },
+      orderBy: { category: "asc" },
     });
   }
 
-  async updateGameSettings(adminId: string, settings: Array<{ key: string; value: any }>) {
+  async updateGameSettings(adminId: string, settings: GameSettingsUpdate[]) {
     const results = [];
     for (const setting of settings) {
       const updated = await this.prisma.gameSettings.upsert({
         where: { key: setting.key },
-        create: { key: setting.key, value: setting.value, description: '', category: 'gameplay', updatedById: adminId },
-        update: { value: setting.value, updatedAt: new Date(), updatedById: adminId },
+        create: {
+          key: setting.key,
+          value: setting.value,
+          description: "",
+          category: "gameplay",
+          updatedById: adminId,
+        },
+        update: {
+          value: setting.value,
+          updatedAt: new Date(),
+          updatedById: adminId,
+        },
       });
       results.push(updated);
     }
@@ -411,11 +555,12 @@ export class AdminService {
   // AUDIT LOGS
   // ============================================
 
-  async getAuditLogs(filters: any = {}, page = 1, limit = 100) {
+  async getAuditLogs(filters: AuditLogFilters = {}, page = 1, limit = 100) {
     const where: any = {};
     if (filters.adminId) where.adminId = filters.adminId;
     if (filters.userId) where.userId = filters.userId;
-    if (filters.action) where.action = { contains: filters.action, mode: 'insensitive' };
+    if (filters.action)
+      where.action = { contains: filters.action, mode: "insensitive" };
     if (filters.resourceType) where.resourceType = filters.resourceType;
     if (filters.fromDate || filters.toDate) {
       where.createdAt = {};
@@ -429,17 +574,27 @@ export class AdminService {
         include: {
           admin: { select: { id: true, username: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.auditLog.count({ where }),
     ]);
 
-    return { data: logs, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: logs,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
-  private async logAudit(adminId: string, action: string, resourceType: string, resourceId: string, oldData: any, newData: any) {
+  private async logAudit(
+    adminId: string,
+    action: string,
+    resourceType: string,
+    resourceId: string,
+    oldData: any,
+    newData: any,
+  ) {
     await this.prisma.auditLog.create({
       data: {
         adminId,

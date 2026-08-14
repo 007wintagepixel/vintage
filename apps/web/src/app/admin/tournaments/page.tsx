@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { motion } from "framer-motion";
+import { useState } from "react";
 import {
   Trophy,
   Plus,
@@ -10,14 +10,13 @@ import {
   Calendar,
   Play,
   CheckCircle,
-  Clock,
   X,
   Crown,
   Settings,
   Eye,
-} from 'lucide-react';
+} from "lucide-react";
 
-type TournamentStatus = 'live' | 'upcoming' | 'completed';
+type TournamentStatus = "live" | "upcoming" | "completed";
 
 interface MockTournament {
   id: string;
@@ -33,30 +32,106 @@ interface MockTournament {
 }
 
 const mockTournaments: MockTournament[] = [
-  { id: 'T-001', name: 'New Year Championship', status: 'live', participants: 32, maxParticipants: 32, prizePool: 100000, startDate: '2024-01-15', endDate: '2024-01-18', format: 'Double Elimination' },
-  { id: 'T-002', name: 'Weekend Warriors Cup', status: 'upcoming', participants: 64, maxParticipants: 128, prizePool: 50000, startDate: '2024-01-20', endDate: '2024-01-21', format: 'Single Elimination' },
-  { id: 'T-003', name: 'Pro League Season 3', status: 'completed', participants: 16, maxParticipants: 16, prizePool: 200000, startDate: '2024-01-01', endDate: '2024-01-10', format: 'Round Robin', winner: 'strategicMind' },
-  { id: 'T-004', name: 'Daily Quick Cup', status: 'upcoming', participants: 8, maxParticipants: 16, prizePool: 5000, startDate: '2024-01-16', endDate: '2024-01-16', format: 'Single Elimination' },
-  { id: 'T-005', name: 'Team Battle Royale', status: 'upcoming', participants: 24, maxParticipants: 32, prizePool: 30000, startDate: '2024-02-03', endDate: '2024-02-04', format: 'Team 2v2' },
-  { id: 'T-006', name: 'Beginner\'s Luck Open', status: 'completed', participants: 48, maxParticipants: 64, prizePool: 10000, startDate: '2023-12-20', endDate: '2023-12-22', format: 'Swiss', winner: 'championKing' },
+  {
+    id: "T-001",
+    name: "New Year Championship",
+    status: "live",
+    participants: 32,
+    maxParticipants: 32,
+    prizePool: 100000,
+    startDate: "2024-01-15",
+    endDate: "2024-01-18",
+    format: "Double Elimination",
+  },
+  {
+    id: "T-002",
+    name: "Weekend Warriors Cup",
+    status: "upcoming",
+    participants: 64,
+    maxParticipants: 128,
+    prizePool: 50000,
+    startDate: "2024-01-20",
+    endDate: "2024-01-21",
+    format: "Single Elimination",
+  },
+  {
+    id: "T-003",
+    name: "Pro League Season 3",
+    status: "completed",
+    participants: 16,
+    maxParticipants: 16,
+    prizePool: 200000,
+    startDate: "2024-01-01",
+    endDate: "2024-01-10",
+    format: "Round Robin",
+    winner: "strategicMind",
+  },
+  {
+    id: "T-004",
+    name: "Daily Quick Cup",
+    status: "upcoming",
+    participants: 8,
+    maxParticipants: 16,
+    prizePool: 5000,
+    startDate: "2024-01-16",
+    endDate: "2024-01-16",
+    format: "Single Elimination",
+  },
+  {
+    id: "T-005",
+    name: "Team Battle Royale",
+    status: "upcoming",
+    participants: 24,
+    maxParticipants: 32,
+    prizePool: 30000,
+    startDate: "2024-02-03",
+    endDate: "2024-02-04",
+    format: "Team 2v2",
+  },
+  {
+    id: "T-006",
+    name: "Beginner's Luck Open",
+    status: "completed",
+    participants: 48,
+    maxParticipants: 64,
+    prizePool: 10000,
+    startDate: "2023-12-20",
+    endDate: "2023-12-22",
+    format: "Swiss",
+    winner: "championKing",
+  },
 ];
 
 export default function AdminTournamentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const activeTournaments = mockTournaments.filter(
-    (t) => t.status === 'live' || t.status === 'upcoming'
+    (t) => t.status === "live" || t.status === "upcoming",
   );
-  const pastTournaments = mockTournaments.filter((t) => t.status === 'completed');
+  const pastTournaments = mockTournaments.filter(
+    (t) => t.status === "completed",
+  );
 
   const getStatusBadge = (status: TournamentStatus) => {
     switch (status) {
-      case 'live':
-        return <span className="px-2 py-1 rounded-full text-caption font-medium bg-accent-green/20 text-accent-green flex items-center gap-1 w-fit"><Play className="w-3 h-3" /> Live Now</span>;
-      case 'upcoming':
-        return <span className="px-2 py-1 rounded-full text-caption font-medium bg-primary-glow/20 text-primary-glow flex items-center gap-1 w-fit"><Calendar className="w-3 h-3" /> Upcoming</span>;
-      case 'completed':
-        return <span className="px-2 py-1 rounded-full text-caption font-medium bg-surface-tertiary text-text-muted flex items-center gap-1 w-fit"><CheckCircle className="w-3 h-3" /> Completed</span>;
+      case "live":
+        return (
+          <span className="px-2 py-1 rounded-full text-caption font-medium bg-accent-green/20 text-accent-green flex items-center gap-1 w-fit">
+            <Play className="w-3 h-3" /> Live Now
+          </span>
+        );
+      case "upcoming":
+        return (
+          <span className="px-2 py-1 rounded-full text-caption font-medium bg-primary-glow/20 text-primary-glow flex items-center gap-1 w-fit">
+            <Calendar className="w-3 h-3" /> Upcoming
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="px-2 py-1 rounded-full text-caption font-medium bg-surface-tertiary text-text-muted flex items-center gap-1 w-fit">
+            <CheckCircle className="w-3 h-3" /> Completed
+          </span>
+        );
     }
   };
 
@@ -69,7 +144,9 @@ export default function AdminTournamentsPage() {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div>
-          <h2 className="font-display text-display-md gradient-text">Tournament Management</h2>
+          <h2 className="font-display text-display-md gradient-text">
+            Tournament Management
+          </h2>
           <p className="text-text-secondary mt-1">
             Create and manage platform tournaments
           </p>
@@ -106,7 +183,9 @@ export default function AdminTournamentsPage() {
               </div>
 
               {/* Name */}
-              <h4 className="font-display text-heading-sm text-text-primary mb-1">{t.name}</h4>
+              <h4 className="font-display text-heading-sm text-text-primary mb-1">
+                {t.name}
+              </h4>
               <p className="text-caption text-text-muted mb-4">{t.format}</p>
 
               {/* Stats */}
@@ -139,8 +218,10 @@ export default function AdminTournamentsPage() {
               <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden mb-4">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${(t.participants / t.maxParticipants) * 100}%` }}
-                  transition={{ delay: 0.3 + index * 0.1, type: 'spring' }}
+                  animate={{
+                    width: `${(t.participants / t.maxParticipants) * 100}%`,
+                  }}
+                  transition={{ delay: 0.3 + index * 0.1, type: "spring" }}
                   className="h-full bg-gradient-to-r from-primary-glow to-accent-magenta rounded-full"
                 />
               </div>
@@ -195,11 +276,17 @@ export default function AdminTournamentsPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         <Trophy className="w-5 h-5 text-text-muted flex-shrink-0" />
-                        <span className="font-medium text-text-primary text-body-sm">{t.name}</span>
+                        <span className="font-medium text-text-primary text-body-sm">
+                          {t.name}
+                        </span>
                       </div>
                     </td>
-                    <td className="py-4 px-4 text-body-sm text-text-secondary">{t.format}</td>
-                    <td className="py-4 px-4 text-body-sm text-text-secondary">{t.participants}</td>
+                    <td className="py-4 px-4 text-body-sm text-text-secondary">
+                      {t.format}
+                    </td>
+                    <td className="py-4 px-4 text-body-sm text-text-secondary">
+                      {t.participants}
+                    </td>
                     <td className="py-4 px-4 text-body-sm text-secondary-glow font-mono font-medium">
                       {t.prizePool.toLocaleString()}
                     </td>
@@ -209,11 +296,16 @@ export default function AdminTournamentsPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         <Crown className="w-4 h-4 text-secondary-glow" />
-                        <span className="text-body-sm text-text-primary font-medium">{t.winner}</span>
+                        <span className="text-body-sm text-text-primary font-medium">
+                          {t.winner}
+                        </span>
                       </div>
                     </td>
                     <td className="py-4 px-4 text-right">
-                      <button className="p-2 rounded-lg text-text-muted hover:text-primary-glow hover:bg-primary-glow/10 transition-all" title="View Details">
+                      <button
+                        className="p-2 rounded-lg text-text-muted hover:text-primary-glow hover:bg-primary-glow/10 transition-all"
+                        title="View Details"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
                     </td>
@@ -240,7 +332,9 @@ export default function AdminTournamentsPage() {
             className="glass-panel-strong p-8 rounded-2xl max-w-md w-full"
           >
             <div className="flex items-center justify-between mb-6">
-              <h3 className="font-display text-heading-md gradient-text">Create Tournament</h3>
+              <h3 className="font-display text-heading-md gradient-text">
+                Create Tournament
+              </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
                 className="p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-tertiary transition-all"
@@ -251,7 +345,11 @@ export default function AdminTournamentsPage() {
             <div className="space-y-4">
               <div>
                 <label className="label">Tournament Name</label>
-                <input type="text" placeholder="e.g. Spring Championship" className="input" />
+                <input
+                  type="text"
+                  placeholder="e.g. Spring Championship"
+                  className="input"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

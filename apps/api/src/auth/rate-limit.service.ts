@@ -2,10 +2,10 @@
 // Rate Limit Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class RateLimitService {
@@ -33,14 +33,25 @@ export class RateLimitService {
   };
 
   // In-memory store for development (use Redis in production)
-  private readonly memoryStore = new Map<string, { count: number; resetAt: number }>();
+  private readonly memoryStore = new Map<
+    string,
+    { count: number; resetAt: number }
+  >();
 
   async checkRegistrationLimit(email: string, phone: string) {
     const emailKey = `reg:${email}`;
     const phoneKey = `reg:${phone}`;
 
-    await this.checkLimit(emailKey, this.LIMITS.registration, this.WINDOWS.registration);
-    await this.checkLimit(phoneKey, this.LIMITS.registration, this.WINDOWS.registration);
+    await this.checkLimit(
+      emailKey,
+      this.LIMITS.registration,
+      this.WINDOWS.registration,
+    );
+    await this.checkLimit(
+      phoneKey,
+      this.LIMITS.registration,
+      this.WINDOWS.registration,
+    );
   }
 
   async checkLoginLimit(identifier: string) {
@@ -55,7 +66,11 @@ export class RateLimitService {
 
   async checkRegistrationIpLimit(ip: string) {
     const key = `regip:${ip}`;
-    await this.checkLimit(key, this.LIMITS.registrationIP, this.WINDOWS.registrationIP);
+    await this.checkLimit(
+      key,
+      this.LIMITS.registrationIP,
+      this.WINDOWS.registrationIP,
+    );
   }
 
   async recordFailedLogin(identifier: string) {

@@ -1,0 +1,33 @@
+<svg width="432" height="432" viewBox="0 0 432 432" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="diceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22D3EE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D946EF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="216" cy="216" r="216" fill="#0C0A09"/>
+  
+  <!-- Ludo Board Center -->
+  <g transform="translate(216, 216)">
+    <!-- Cross arms -->
+    <rect x="-80" y="-35" width="160" height="70" rx="8" fill="#1F2937"/>
+    <rect x="-35" y="-80" width="70" height="160" rx="8" fill="#1F2937"/>
+    
+    <!-- Center square -->
+    <rect x="-25" y="-25" width="50" height="50" fill="#111827"/>
+    
+    <!-- Four triangles -->
+    <polygon points="-25,-25 25,-25 0,0" fill="url(#diceGrad)" opacity="0.3"/>
+    <polygon points="-25,-25 -25,25 0,0" fill="url(#diceGrad)" opacity="0.3"/>
+    <polygon points="25,-25 25,25 0,0" fill="url(#diceGrad)" opacity="0.3"/>
+    <polygon points="-25,25 25,25 0,0" fill="url(#diceGrad)" opacity="0.3"/>
+    
+    <!-- Tokens at start -->
+    <circle cx="-80" cy="-100" r="12" fill="#EF4444"/>
+    <circle cx="80" cy="-100" r="12" fill="#22C55E"/>
+    <circle cx="-80" cy="100" r="12" fill="#EAB308"/>
+    <circle cx="80" cy="100" r="12" fill="#3B82F6"/>
+  </g>
+</svg>

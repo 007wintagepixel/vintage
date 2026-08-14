@@ -10,21 +10,21 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
   MessageBody,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { Logger } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { GameService } from './game.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { GameService } from "./game.service";
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: "*",
     credentials: true,
   },
-  namespace: '/game',
+  namespace: "/game",
 })
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -43,8 +43,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     try {
       // Extract token from handshake auth or query
-      const token = client.handshake.auth?.token ?? client.handshake.query?.token;
-      
+      const token =
+        client.handshake.auth?.token ?? client.handshake.query?.token;
+
       if (!token) {
         this.logger.warn(`Client ${client.id} connected without token`);
         client.disconnect();
@@ -53,13 +54,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Verify JWT
       const payload = this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        issuer: 'ludo-nexus',
-        audience: 'ludo-nexus-api',
+        secret: this.configService.get<string>("JWT_SECRET"),
+        issuer: "ludo-nexus",
+        audience: "ludo-nexus-api",
       });
 
       const userId = payload.sub;
-      
+
       // Store user-socket mapping
       if (!this.userSockets.has(userId)) {
         this.userSockets.set(userId, new Set());
@@ -70,11 +71,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       client.join(`user:${userId}`);
 
       this.logger.log(`Client ${client.id} connected for user ${userId}`);
-      
+
       // Send connection confirmation
-      client.emit('connected', { userId, socketId: client.id });
+      client.emit("connected", { userId, socketId: client.id });
     } catch (error) {
-      this.logger.warn(`Client ${client.id} authentication failed: ${error.message}`);
+      this.logger.warn(
+        `Client ${client.id} authentication failed: ${error.message}`,
+      );
       client.disconnect();
     }
   }
@@ -93,31 +96,31 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.log(`Client ${client.id} disconnected`);
   }
 
-  @SubscribeMessage('join_match')
+  @SubscribeMessage("join_match")
   async handleJoinMatch(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { matchId: string },
   ) {
     try {
       const userId = this.getUserIdFromSocket(client);
-      if (!userId) return { error: 'Not authenticated' };
+      if (!userId) return { error: "Not authenticated" };
 
       // Verify user is part of match
       const match = await this.gameService.getMatch(data.matchId, userId);
-      
+
       // Join match room
       client.join(`match:${data.matchId}`);
-      
+
       // Get current game state
       const gameState = await this.gameService.getMatchState(data.matchId);
-      
+
       return { success: true, gameState };
     } catch (error) {
       return { error: error.message };
     }
   }
 
-  @SubscribeMessage('leave_match')
+  @SubscribeMessage("leave_match")
   handleLeaveMatch(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { matchId: string },
@@ -126,19 +129,23 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { success: true };
   }
 
-  @SubscribeMessage('roll_dice')
+  @SubscribeMessage("roll_dice")
   async handleRollDice(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { matchId: string; idempotencyKey: string },
   ) {
     try {
       const userId = this.getUserIdFromSocket(client);
-      if (!userId) return { error: 'Not authenticated' };
+      if (!userId) return { error: "Not authenticated" };
 
-      const result = await this.gameService.rollDice(data.matchId, userId, data.idempotencyKey);
-      
+      const result = await this.gameService.rollDice(
+        data.matchId,
+        userId,
+        data.idempotencyKey,
+      );
+
       // Broadcast to match room
-      this.server.to(`match:${data.matchId}`).emit('dice_rolled', {
+      this.server.to(`match:${data.matchId}`).emit("dice_rolled", {
         userId,
         diceRoll: result.diceRoll,
         legalMoves: result.legalMoves,
@@ -151,20 +158,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('move_token')
+  @SubscribeMessage("move_token")
   async handleMoveToken(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { 
-      matchId: string; 
-      tokenId: number; 
-      toPosition: number; 
+    @MessageBody()
+    data: {
+      matchId: string;
+      tokenId: number;
+      toPosition: number;
       gameStateVersion: number;
       idempotencyKey: string;
     },
   ) {
     try {
       const userId = this.getUserIdFromSocket(client);
-      if (!userId) return { error: 'Not authenticated' };
+      if (!userId) return { error: "Not authenticated" };
 
       const result = await this.gameService.moveToken(
         data.matchId,
@@ -172,11 +180,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.tokenId,
         data.toPosition,
         data.gameStateVersion,
-        data.idempotencyKey
+        data.idempotencyKey,
       );
 
       // Broadcast to match room
-      this.server.to(`match:${data.matchId}`).emit('token_moved', {
+      this.server.to(`match:${data.matchId}`).emit("token_moved", {
         userId,
         move: result.move,
         capturedTokens: result.capturedTokens,
@@ -184,8 +192,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       });
 
       // Check if game completed
-      if (result.gameState.status === 'completed') {
-        this.server.to(`match:${data.matchId}`).emit('game_completed', {
+      if (result.gameState.status === "completed") {
+        this.server.to(`match:${data.matchId}`).emit("game_completed", {
           winner: result.gameState.winner,
           rankings: result.gameState.rankings,
           gameState: result.gameState,
@@ -198,16 +206,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('send_chat')
+  @SubscribeMessage("send_chat")
   async handleSendChat(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { matchId: string; message: string },
   ) {
     const userId = this.getUserIdFromSocket(client);
-    if (!userId) return { error: 'Not authenticated' };
+    if (!userId) return { error: "Not authenticated" };
 
     // Broadcast to match room
-    this.server.to(`match:${data.matchId}`).emit('chat_message', {
+    this.server.to(`match:${data.matchId}`).emit("chat_message", {
       userId,
       message: data.message,
       timestamp: new Date().toISOString(),
@@ -216,7 +224,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return { success: true };
   }
 
-  @SubscribeMessage('ping')
+  @SubscribeMessage("ping")
   handlePing() {
     return { pong: true, timestamp: Date.now() };
   }
@@ -225,12 +233,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private getUserIdFromSocket(client: Socket): string | null {
     const token = client.handshake.auth?.token ?? client.handshake.query?.token;
     if (!token) return null;
-    
+
     try {
       const payload = this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        issuer: 'ludo-nexus',
-        audience: 'ludo-nexus-api',
+        secret: this.configService.get<string>("JWT_SECRET"),
+        issuer: "ludo-nexus",
+        audience: "ludo-nexus-api",
       });
       return payload.sub;
     } catch {

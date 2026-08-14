@@ -2,65 +2,120 @@
 // Register Page Content (Client Component)
 // ============================================
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { Dice1, Mail, Lock, User, Eye, EyeOff, Loader2, AlertCircle, CheckCircle, Shield, Globe, Star } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {
+  Dice1,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Shield,
+  Globe,
+  Star,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-const registerSchema = z.object({
-  username: z.string().min(3, 'Username must be at least 3 characters').max(20, 'Username must be at most 20 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
-  fullName: z.string().min(1, 'Full name is required').max(100),
-  email: z.string().email('Invalid email address'),
-  country: z.string().length(2, 'Please select a country'),
-  mobileNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, 'Phone number must be in E.164 format (e.g., +123****7890)'),
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 'Password must contain uppercase, lowercase, number, and special character'),
-  confirmPassword: z.string(),
-  referralCode: z.string().max(20).optional(),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in YYYY-MM-DD format'),
-  acceptTerms: z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
-  acceptPrivacy: z.literal(true, { errorMap: () => ({ message: 'You must accept the privacy policy' }) }),
-  acceptResponsibleGaming: z.literal(true, { errorMap: () => ({ message: 'You must accept responsible gaming policy' }) }),
-  confirmAge: z.literal(true, { errorMap: () => ({ message: 'You must confirm you are 18+' }) }),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-}).refine(data => {
-  const dob = new Date(data.dateOfBirth);
-  const age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-  return age >= 18;
-}, {
-  message: 'You must be at least 18 years old',
-  path: ['dateOfBirth'],
-});
+const registerSchema = z
+  .object({
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .max(20, "Username must be at most 20 characters")
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores",
+      ),
+    fullName: z.string().min(1, "Full name is required").max(100),
+    email: z.string().email("Invalid email address"),
+    country: z.string().length(2, "Please select a country"),
+    mobileNumber: z
+      .string()
+      .regex(
+        /^\+[1-9]\d{1,14}$/,
+        "Phone number must be in E.164 format (e.g., +123****7890)",
+      ),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128)
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        "Password must contain uppercase, lowercase, number, and special character",
+      ),
+    confirmPassword: z.string(),
+    referralCode: z.string().max(20).optional(),
+    dateOfBirth: z
+      .string()
+      .regex(
+        /^\d{4}-\d{2}-\d{2}$/,
+        "Date of birth must be in YYYY-MM-DD format",
+      ),
+    acceptTerms: z.literal(true, {
+      errorMap: () => ({ message: "You must accept the terms" }),
+    }),
+    acceptPrivacy: z.literal(true, {
+      errorMap: () => ({ message: "You must accept the privacy policy" }),
+    }),
+    acceptResponsibleGaming: z.literal(true, {
+      errorMap: () => ({
+        message: "You must accept responsible gaming policy",
+      }),
+    }),
+    confirmAge: z.literal(true, {
+      errorMap: () => ({ message: "You must confirm you are 18+" }),
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+  .refine(
+    (data) => {
+      const dob = new Date(data.dateOfBirth);
+      const age = Math.floor(
+        (Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+      );
+      return age >= 18;
+    },
+    {
+      message: "You must be at least 18 years old",
+      path: ["dateOfBirth"],
+    },
+  );
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 const countries = [
-  { code: 'US', name: 'United States' },
-  { code: 'IN', name: 'India' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'CA', name: 'Canada' },
-  { code: 'AU', name: 'Australia' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'FR', name: 'France' },
-  { code: 'BR', name: 'Brazil' },
-  { code: 'JP', name: 'Japan' },
-  { code: 'SG', name: 'Singapore' },
-  { code: 'AE', name: 'United Arab Emirates' },
-  { code: 'OTHER', name: 'Other' },
+  { code: "US", name: "United States" },
+  { code: "IN", name: "India" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" },
+  { code: "AU", name: "Australia" },
+  { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" },
+  { code: "BR", name: "Brazil" },
+  { code: "JP", name: "Japan" },
+  { code: "SG", name: "Singapore" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "OTHER", name: "Other" },
 ];
 
 export default function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
-  
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,7 +126,7 @@ export default function RegisterContent() {
     register,
     handleSubmit,
     watch,
-    setValue,
+    // setValue, // destructured but not used - TODO: use for programmatically setting values
     formState: { errors },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -83,10 +138,10 @@ export default function RegisterContent() {
     },
   });
 
-  const password = watch('password');
+  const password = watch("password");
 
   const getPasswordStrength = (pwd: string) => {
-    if (!pwd) return { score: 0, label: '', color: '' };
+    if (!pwd) return { score: 0, label: "", color: "" };
     let score = 0;
     if (pwd.length >= 8) score++;
     if (pwd.length >= 12) score++;
@@ -94,9 +149,10 @@ export default function RegisterContent() {
     if (/[a-z]/.test(pwd)) score++;
     if (/\d/.test(pwd)) score++;
     if (/[@$!%*?&]/.test(pwd)) score++;
-    if (score <= 2) return { score, label: 'Weak', color: 'text-accent-red' };
-    if (score <= 4) return { score, label: 'Medium', color: 'text-secondary-glow' };
-    return { score, label: 'Strong', color: 'text-accent-green' };
+    if (score <= 2) return { score, label: "Weak", color: "text-accent-red" };
+    if (score <= 4)
+      return { score, label: "Medium", color: "text-secondary-glow" };
+    return { score, label: "Strong", color: "text-accent-green" };
   };
 
   const strength = getPasswordStrength(password);
@@ -104,32 +160,36 @@ export default function RegisterContent() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          deviceId: 'web',
+          deviceId: "web",
           deviceName: navigator.userAgent,
         }),
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(result.message || 'Registration failed');
+        throw new Error(result.message || "Registration failed");
       }
 
       // Store tokens
-      localStorage.setItem('accessToken', result.accessToken);
-      localStorage.setItem('refreshToken', result.refreshToken);
-      
+      localStorage.setItem("accessToken", result.accessToken);
+      localStorage.setItem("refreshToken", result.refreshToken);
+
       setSuccess(true);
       setStep(2); // Move to email verification step
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -157,16 +217,18 @@ export default function RegisterContent() {
         <div className="relative">
           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('username')}
+            {...register("username")}
             type="text"
             id="username"
-            className={`input pl-12 ${errors.username ? 'input-error' : ''}`}
+            className={`input pl-12 ${errors.username ? "input-error" : ""}`}
             placeholder="Choose a username"
             autoComplete="username"
             disabled={isLoading}
           />
           {errors.username && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.username.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.username.message}
+            </p>
           )}
         </div>
       </div>
@@ -178,16 +240,18 @@ export default function RegisterContent() {
         <div className="relative">
           <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('fullName')}
+            {...register("fullName")}
             type="text"
             id="fullName"
-            className={`input pl-12 ${errors.fullName ? 'input-error' : ''}`}
+            className={`input pl-12 ${errors.fullName ? "input-error" : ""}`}
             placeholder="Your full name"
             autoComplete="name"
             disabled={isLoading}
           />
           {errors.fullName && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.fullName.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.fullName.message}
+            </p>
           )}
         </div>
       </div>
@@ -199,16 +263,18 @@ export default function RegisterContent() {
         <div className="relative">
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('email')}
+            {...register("email")}
             type="email"
             id="email"
-            className={`input pl-12 ${errors.email ? 'input-error' : ''}`}
+            className={`input pl-12 ${errors.email ? "input-error" : ""}`}
             placeholder="your@email.com"
             autoComplete="email"
             disabled={isLoading}
           />
           {errors.email && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.email.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.email.message}
+            </p>
           )}
         </div>
       </div>
@@ -219,18 +285,22 @@ export default function RegisterContent() {
             Country
           </label>
           <select
-            {...register('country')}
+            {...register("country")}
             id="country"
-            className={`input ${errors.country ? 'input-error' : ''}`}
+            className={`input ${errors.country ? "input-error" : ""}`}
             disabled={isLoading}
           >
             <option value="">Select country</option>
-            {countries.map(c => (
-              <option key={c.code} value={c.code}>{c.name}</option>
+            {countries.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
             ))}
           </select>
           {errors.country && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.country.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.country.message}
+            </p>
           )}
         </div>
         <div>
@@ -240,16 +310,18 @@ export default function RegisterContent() {
           <div className="relative">
             <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
             <input
-              {...register('mobileNumber')}
+              {...register("mobileNumber")}
               type="tel"
               id="mobileNumber"
-              className={`input pl-12 ${errors.mobileNumber ? 'input-error' : ''}`}
+              className={`input pl-12 ${errors.mobileNumber ? "input-error" : ""}`}
               placeholder="+123****7890"
               autoComplete="tel"
               disabled={isLoading}
             />
             {errors.mobileNumber && (
-              <p className="mt-1.5 text-body-sm text-accent-red">{errors.mobileNumber.message}</p>
+              <p className="mt-1.5 text-body-sm text-accent-red">
+                {errors.mobileNumber.message}
+              </p>
             )}
           </div>
         </div>
@@ -262,15 +334,21 @@ export default function RegisterContent() {
         <div className="relative">
           <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('dateOfBirth')}
+            {...register("dateOfBirth")}
             type="date"
             id="dateOfBirth"
-            className={`input pl-12 ${errors.dateOfBirth ? 'input-error' : ''}`}
-            max={new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+            className={`input pl-12 ${errors.dateOfBirth ? "input-error" : ""}`}
+            max={
+              new Date(Date.now() - 18 * 365.25 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0]
+            }
             disabled={isLoading}
           />
           {errors.dateOfBirth && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.dateOfBirth.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.dateOfBirth.message}
+            </p>
           )}
         </div>
       </div>
@@ -282,10 +360,10 @@ export default function RegisterContent() {
         <div className="relative">
           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('password')}
-            type={showPassword ? 'text' : 'password'}
+            {...register("password")}
+            type={showPassword ? "text" : "password"}
             id="password"
-            className={`input pl-12 pr-12 ${errors.password ? 'input-error' : ''}`}
+            className={`input pl-12 pr-12 ${errors.password ? "input-error" : ""}`}
             placeholder="Create a strong password"
             autoComplete="new-password"
             disabled={isLoading}
@@ -297,10 +375,16 @@ export default function RegisterContent() {
             disabled={isLoading}
             data-testid="toggle-password"
           >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
           </button>
           {errors.password && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.password.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.password.message}
+            </p>
           )}
         </div>
         {password && (
@@ -311,10 +395,12 @@ export default function RegisterContent() {
                 animate={{ width: `${(strength.score / 6) * 100}%` }}
                 transition={{ duration: 0.3 }}
                 className="h-full rounded-full"
-                style={{ backgroundColor: strength.color.replace('text-', '') }}
+                style={{ backgroundColor: strength.color.replace("text-", "") }}
               />
             </div>
-            <p className={`mt-1 text-body-xs ${strength.color}`}>Password strength: {strength.label}</p>
+            <p className={`mt-1 text-body-xs ${strength.color}`}>
+              Password strength: {strength.label}
+            </p>
           </div>
         )}
       </div>
@@ -326,16 +412,18 @@ export default function RegisterContent() {
         <div className="relative">
           <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('confirmPassword')}
-            type={showPassword ? 'text' : 'password'}
+            {...register("confirmPassword")}
+            type={showPassword ? "text" : "password"}
             id="confirmPassword"
-            className={`input pl-12 ${errors.confirmPassword ? 'input-error' : ''}`}
+            className={`input pl-12 ${errors.confirmPassword ? "input-error" : ""}`}
             placeholder="Confirm your password"
             autoComplete="new-password"
             disabled={isLoading}
           />
           {errors.confirmPassword && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{errors.confirmPassword.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {errors.confirmPassword.message}
+            </p>
           )}
         </div>
       </div>
@@ -347,7 +435,7 @@ export default function RegisterContent() {
         <div className="relative">
           <Star className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...register('referralCode')}
+            {...register("referralCode")}
             type="text"
             id="referralCode"
             className="input pl-12"
@@ -360,40 +448,52 @@ export default function RegisterContent() {
       <div className="space-y-3 border-t border-surface-border pt-6">
         <label className="flex items-start gap-3 cursor-pointer">
           <input
-            {...register('acceptTerms')}
+            {...register("acceptTerms")}
             type="checkbox"
             className="w-4 h-4 mt-0.5 rounded border-surface-border bg-surface-tertiary text-primary-glow focus:ring-primary-glow focus:ring-2"
             required
           />
           <div className="text-body-sm text-text-secondary">
-            I agree to the <Link href="/terms" className="text-primary-glow hover:underline">Terms of Service</Link>
+            I agree to the{" "}
+            <Link href="/terms" className="text-primary-glow hover:underline">
+              Terms of Service
+            </Link>
           </div>
         </label>
         <label className="flex items-start gap-3 cursor-pointer">
           <input
-            {...register('acceptPrivacy')}
+            {...register("acceptPrivacy")}
             type="checkbox"
             className="w-4 h-4 mt-0.5 rounded border-surface-border bg-surface-tertiary text-primary-glow focus:ring-primary-glow focus:ring-2"
             required
           />
           <div className="text-body-sm text-text-secondary">
-            I agree to the <Link href="/privacy" className="text-primary-glow hover:underline">Privacy Policy</Link>
+            I agree to the{" "}
+            <Link href="/privacy" className="text-primary-glow hover:underline">
+              Privacy Policy
+            </Link>
           </div>
         </label>
         <label className="flex items-start gap-3 cursor-pointer">
           <input
-            {...register('acceptResponsibleGaming')}
+            {...register("acceptResponsibleGaming")}
             type="checkbox"
             className="w-4 h-4 mt-0.5 rounded border-surface-border bg-surface-tertiary text-primary-glow focus:ring-primary-glow focus:ring-2"
             required
           />
           <div className="text-body-sm text-text-secondary">
-            I agree to the <Link href="/responsible-gaming" className="text-primary-glow hover:underline">Responsible Gaming Policy</Link>
+            I agree to the{" "}
+            <Link
+              href="/responsible-gaming"
+              className="text-primary-glow hover:underline"
+            >
+              Responsible Gaming Policy
+            </Link>
           </div>
         </label>
         <label className="flex items-start gap-3 cursor-pointer">
           <input
-            {...register('confirmAge')}
+            {...register("confirmAge")}
             type="checkbox"
             className="w-4 h-4 mt-0.5 rounded border-surface-border bg-surface-tertiary text-primary-glow focus:ring-primary-glow focus:ring-2"
             required
@@ -417,8 +517,18 @@ export default function RegisterContent() {
         ) : (
           <>
             <span>Create Account</span>
-            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            <svg
+              className="w-5 h-5 transition-transform group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
             </svg>
           </>
         )}
@@ -438,7 +548,8 @@ export default function RegisterContent() {
       <div>
         <h2 className="font-display text-heading-lg mb-2">Verify Your Email</h2>
         <p className="text-text-secondary text-body">
-          We&apos;ve sent a 6-digit code to your email. Enter it below to verify your account.
+          We&apos;ve sent a 6-digit code to your email. Enter it below to verify
+          your account.
         </p>
       </div>
       <form onSubmit={verifyEmailOtp} className="space-y-4">
@@ -462,7 +573,8 @@ export default function RegisterContent() {
           Verify Email
         </button>
         <p className="text-body-sm text-text-muted">
-          Didn&apos;t receive the code? <button className="text-primary-glow hover:underline">Resend</button>
+          Didn&apos;t receive the code?{" "}
+          <button className="text-primary-glow hover:underline">Resend</button>
         </p>
       </form>
     </div>
@@ -480,7 +592,8 @@ export default function RegisterContent() {
       <div>
         <h2 className="font-display text-heading-lg mb-2">Verify Your Phone</h2>
         <p className="text-text-secondary text-body">
-          We&apos;ve sent a 6-digit code via SMS. Enter it below to complete verification.
+          We&apos;ve sent a 6-digit code via SMS. Enter it below to complete
+          verification.
         </p>
       </div>
       <form onSubmit={verifyPhoneOtp} className="space-y-4">
@@ -523,7 +636,9 @@ export default function RegisterContent() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-glow to-accent-magenta flex items-center justify-center">
               <Dice1 className="w-6 h-6 text-text-inverse" />
             </div>
-            <span className="font-display text-heading-lg gradient-text">Ludo Nexus</span>
+            <span className="font-display text-heading-lg gradient-text">
+              Ludo Nexus
+            </span>
           </Link>
         </div>
       </nav>
@@ -534,16 +649,35 @@ export default function RegisterContent() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="glass-card-strong p-8 md:p-10 rounded-2xl"
           >
             <div className="flex items-center gap-2 mb-8">
-              <Link href="/login" className="text-text-muted hover:text-text-primary transition-colors p-2 rounded-lg hover:bg-surface-tertiary">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+              <Link
+                href="/login"
+                className="text-text-muted hover:text-text-primary transition-colors p-2 rounded-lg hover:bg-surface-tertiary"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  />
+                </svg>
               </Link>
               <div className="flex-1 text-center">
-                <h1 className="font-display text-heading-xl mb-1">Create Account</h1>
-                <p className="text-text-secondary text-body">Join the future of Ludo gaming</p>
+                <h1 className="font-display text-heading-xl mb-1">
+                  Create Account
+                </h1>
+                <p className="text-text-secondary text-body">
+                  Join the future of Ludo gaming
+                </p>
               </div>
             </div>
 
@@ -552,9 +686,9 @@ export default function RegisterContent() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-                  success 
-                    ? 'bg-accent-green/20 border border-accent-green/30 text-accent-green' 
-                    : 'bg-accent-red/20 border border-accent-red/30 text-accent-red'
+                  success
+                    ? "bg-accent-green/20 border border-accent-green/30 text-accent-green"
+                    : "bg-accent-red/20 border border-accent-red/30 text-accent-red"
                 }`}
               >
                 {success ? (
@@ -576,8 +710,11 @@ export default function RegisterContent() {
             {step === 3 && renderStep3()}
 
             <p className="mt-8 text-center text-body-sm text-text-muted">
-              Already have an account?{' '}
-              <Link href="/login" className="text-primary-glow hover:text-primary font-medium">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="text-primary-glow hover:text-primary font-medium"
+              >
                 Sign in
               </Link>
             </p>

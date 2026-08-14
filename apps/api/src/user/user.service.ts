@@ -2,11 +2,17 @@
 // User Service
 // ============================================
 
-import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
-import type { UpdateProfile, ChangePassword } from '@ludo-nexus/validation';
+import type { UpdateProfile, ChangePassword } from "@ludo-nexus/validation";
 
 @Injectable()
 export class UserService {
@@ -36,7 +42,7 @@ export class UserService {
       },
     });
 
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     const { passwordHash, ...safeUser } = user;
     return safeUser;
@@ -58,13 +64,13 @@ export class UserService {
       },
     });
 
-    if (!user || user.deletedAt) throw new NotFoundException('User not found');
+    if (!user || user.deletedAt) throw new NotFoundException("User not found");
 
     const profile = user.profile;
     const isFriend = viewerId ? await this.areFriends(viewerId, userId) : false;
 
     // Check privacy settings
-    const privacy = profile?.privacySettings as any ?? {};
+    const privacy = (profile?.privacySettings as any) ?? {};
     const showStats = privacy.showMatchHistory !== false || isFriend;
 
     return {
@@ -78,27 +84,34 @@ export class UserService {
       kycStatus: user.kycStatus,
       country: user.country,
       createdAt: user.createdAt,
-      profile: profile ? {
-        displayName: profile.displayName,
-        bio: profile.bio,
-        language: profile.language,
-      } : null,
-      stats: showStats ? {
-        totalMatches: user.totalMatches,
-        wins: user.wins,
-        losses: user.losses,
-        winRate: user.totalMatches > 0 ? Math.round((user.wins / user.totalMatches) * 100) : 0,
-        tournamentsWon: 0,
-        currentStreak: 0, // Placeholder — will calculate from match history
-        bestStreak: 0, // Placeholder — will calculate from match history
-      } : null,
+      profile: profile
+        ? {
+            displayName: profile.displayName,
+            bio: profile.bio,
+            language: profile.language,
+          }
+        : null,
+      stats: showStats
+        ? {
+            totalMatches: user.totalMatches,
+            wins: user.wins,
+            losses: user.losses,
+            winRate:
+              user.totalMatches > 0
+                ? Math.round((user.wins / user.totalMatches) * 100)
+                : 0,
+            tournamentsWon: 0,
+            currentStreak: 0, // Placeholder — will calculate from match history
+            bestStreak: 0, // Placeholder — will calculate from match history
+          }
+        : null,
       isFriend,
     };
   }
 
   async updateProfile(userId: string, data: UpdateProfile) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     // Update user fields (country, avatarUrl are on User model)
     if (data.country !== undefined || data.avatarUrl !== undefined) {
@@ -106,20 +119,27 @@ export class UserService {
         where: { id: userId },
         data: {
           ...(data.country !== undefined ? { country: data.country } : {}),
-          ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
+          ...(data.avatarUrl !== undefined
+            ? { avatarUrl: data.avatarUrl }
+            : {}),
         },
       });
     }
 
     // Update profile fields (displayName, bio, language, privacySettings)
-    if (data.displayName !== undefined || data.bio !== undefined || data.language !== undefined || data.privacySettings !== undefined) {
+    if (
+      data.displayName !== undefined ||
+      data.bio !== undefined ||
+      data.language !== undefined ||
+      data.privacySettings !== undefined
+    ) {
       await this.prisma.profile.upsert({
         where: { userId },
         create: {
           userId,
           displayName: data.displayName,
           bio: data.bio,
-          language: data.language ?? 'en',
+          language: data.language ?? "en",
           privacySettings: data.privacySettings ?? {},
         },
         update: {
@@ -138,11 +158,11 @@ export class UserService {
     // This would use PasswordService
     // For now, just validate
     if (data.newPassword !== data.confirmPassword) {
-      throw new BadRequestException('Passwords do not match');
+      throw new BadRequestException("Passwords do not match");
     }
 
     // Placeholder — will verify current password and hash new one via PasswordService
-    return { success: true, message: 'Password changed' };
+    return { success: true, message: "Password changed" };
   }
 
   async uploadAvatar(userId: string, fileUrl: string) {
@@ -164,25 +184,35 @@ export class UserService {
       include: {
         matches: {
           where: { finalRank: { not: null } },
-          select: { finalRank: true, coinsWon: true, coinsLost: true, match: { select: { mode: true, createdAt: true } } },
+          select: {
+            finalRank: true,
+            coinsWon: true,
+            coinsLost: true,
+            match: { select: { mode: true, createdAt: true } },
+          },
         },
       },
     });
 
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     const matches = user.matches;
     const totalMatches = matches.length;
     const wins = matches.filter((m: any) => m.finalRank === 1).length;
-    const losses = matches.filter((m: any) => m.finalRank && m.finalRank > 1).length;
+    const losses = matches.filter(
+      (m: any) => m.finalRank && m.finalRank > 1,
+    ).length;
     const draws = totalMatches - wins - losses;
 
-    const vsAI = matches.filter((m: any) => m.match.mode === 'vs_ai');
-    const vsHuman = matches.filter((m: any) => m.match.mode === 'vs_human');
-    const team = matches.filter((m: any) => m.match.mode === 'team');
-    const tournament = matches.filter((m: any) => m.match.mode === 'tournament');
+    const vsAI = matches.filter((m: any) => m.match.mode === "vs_ai");
+    const vsHuman = matches.filter((m: any) => m.match.mode === "vs_human");
+    const team = matches.filter((m: any) => m.match.mode === "team");
+    const tournament = matches.filter(
+      (m: any) => m.match.mode === "tournament",
+    );
 
-    const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
+    const winRate =
+      totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
 
     return {
       totalMatches,
@@ -190,10 +220,22 @@ export class UserService {
       losses,
       draws,
       winRate,
-      vsAI: { played: vsAI.length, won: vsAI.filter((m: any) => m.finalRank === 1).length },
-      vsHuman: { played: vsHuman.length, won: vsHuman.filter((m: any) => m.finalRank === 1).length },
-      team: { played: team.length, won: team.filter((m: any) => m.finalRank === 1).length },
-      tournament: { played: tournament.length, won: tournament.filter((m: any) => m.finalRank === 1).length },
+      vsAI: {
+        played: vsAI.length,
+        won: vsAI.filter((m: any) => m.finalRank === 1).length,
+      },
+      vsHuman: {
+        played: vsHuman.length,
+        won: vsHuman.filter((m: any) => m.finalRank === 1).length,
+      },
+      team: {
+        played: team.length,
+        won: team.filter((m: any) => m.finalRank === 1).length,
+      },
+      tournament: {
+        played: tournament.length,
+        won: tournament.filter((m: any) => m.finalRank === 1).length,
+      },
       averageGameDuration: 0, // Placeholder — will calculate from match history
       favoriteColor: null, // Placeholder — will calculate from match history
       mostCapturesInGame: 0, // Placeholder — will calculate from match history
@@ -209,17 +251,27 @@ export class UserService {
         },
         include: {
           players: {
-            select: { userId: true, color: true, isBot: true, finalRank: true, coinsWon: true, coinsLost: true },
+            select: {
+              userId: true,
+              color: true,
+              isBot: true,
+              finalRank: true,
+              coinsWon: true,
+              coinsLost: true,
+            },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.match.count({ where: { players: { some: { userId } } } }),
     ]);
 
-    return { data: matches, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: matches,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   // ============================================
@@ -233,7 +285,7 @@ export class UserService {
           { userId: userId1, friendId: userId2 },
           { userId: userId2, friendId: userId1 },
         ],
-        status: 'accepted',
+        status: "accepted",
       },
     });
     return !!friendship;

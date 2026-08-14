@@ -1,62 +1,7 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Dice1, User, Wallet, History, Users, Trophy, Settings, LogOut, ChevronRight, Bell, Shield, Star } from 'lucide-react';
-
-const dashboardSections = [
-  {
-    id: 'profile',
-    title: 'Profile',
-    description: 'Manage your account, avatar, and preferences',
-    icon: User,
-    href: '/dashboard/profile',
-    badge: 'New',
-    color: 'from-primary-glow to-accent-cyan',
-  },
-  {
-    id: 'wallet',
-    title: 'Wallet',
-    description: 'Balance, transactions, deposits & withdrawals',
-    icon: Wallet,
-    href: '/dashboard/wallet',
-    badge: '1,234',
-    color: 'from-accent-green to-secondary-glow',
-  },
-  {
-    id: 'matches',
-    title: 'Match History',
-    description: 'View past games, replays, and statistics',
-    icon: History,
-    href: '/dashboard/matches',
-    color: 'from-secondary-glow to-accent-magenta',
-  },
-  {
-    id: 'friends',
-    title: 'Friends',
-    description: 'Manage friends, requests, and invitations',
-    icon: Users,
-    href: '/dashboard/friends',
-    badge: '3',
-    color: 'from-accent-cyan to-primary-glow',
-  },
-  {
-    id: 'tournaments',
-    title: 'Tournaments',
-    description: 'Join tournaments, view brackets & prizes',
-    icon: Trophy,
-    href: '/dashboard/tournaments',
-    color: 'from-accent-gold to-secondary-glow',
-  },
-  {
-    id: 'settings',
-    title: 'Settings',
-    description: 'Notifications, privacy, security & preferences',
-    icon: Settings,
-    href: '/dashboard/settings',
-    color: 'from-text-muted to-primary-glow',
-  },
-];
+import Link from "next/link";
+import { Dice1, Bell } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -72,21 +17,37 @@ export default function DashboardLayout({
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-glow to-accent-magenta flex items-center justify-center">
               <Dice1 className="w-6 h-6 text-text-inverse" />
             </div>
-            <span className="font-display text-heading-lg gradient-text">Ludo Nexus</span>
+            <span className="font-display text-heading-lg gradient-text">
+              Ludo Nexus
+            </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/dashboard" className="text-text-secondary hover:text-text-primary transition-colors text-body-sm font-medium">Dashboard</Link>
-            <Link href="/game-modes" className="text-text-secondary hover:text-text-primary transition-colors text-body-sm font-medium">Play</Link>
+            <Link
+              href="/dashboard"
+              className="text-text-secondary hover:text-text-primary transition-colors text-body-sm font-medium"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/game-modes"
+              className="text-text-secondary hover:text-text-primary transition-colors text-body-sm font-medium"
+            >
+              Play
+            </Link>
           </div>
 
           <div className="flex items-center gap-3">
             <button className="relative p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-tertiary transition-colors">
               <Bell className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent-red rounded-full text-xs text-white flex items-center justify-center">3</span>
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-accent-red rounded-full text-xs text-white flex items-center justify-center">
+                3
+              </span>
             </button>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-glow/20 to-accent-magenta/20 flex items-center justify-center border border-surface-borderGlow">
-              <span className="font-display text-heading-sm gradient-text">P1</span>
+              <span className="font-display text-heading-sm gradient-text">
+                P1
+              </span>
             </div>
           </div>
         </div>
@@ -94,9 +55,7 @@ export default function DashboardLayout({
 
       {/* Dashboard Content */}
       <main className="min-h-screen pt-32 pb-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          {children}
-        </div>
+        <div className="max-w-7xl mx-auto">{children}</div>
       </main>
 
       {/* Footer */}

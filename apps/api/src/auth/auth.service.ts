@@ -9,19 +9,24 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as argon2 from 'argon2';
-import { v4 as uuidv4 } from 'uuid';
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { OtpService } from './otp.service';
-import { SessionService } from './session.service';
-import { PasswordService } from './password.service';
-import { RateLimitService } from './rate-limit.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { OtpService } from "./otp.service";
+import { SessionService } from "./session.service";
+import { PasswordService } from "./password.service";
+import { RateLimitService } from "./rate-limit.service";
 
-import type { RegisterRequest, LoginRequest, OTPVerify, ForgotPassword, ResetPassword, RefreshToken } from '@ludo-nexus/shared-types';
+import type {
+  RegisterRequest,
+  LoginRequest,
+  OTPVerify,
+  ForgotPassword,
+  ResetPassword,
+  RefreshToken,
+} from "@ludo-nexus/shared-types";
 
 @Injectable()
 export class AuthService {
@@ -39,16 +44,23 @@ export class AuthService {
   // REGISTRATION
   // ============================================
 
-  async register(data: RegisterRequest, deviceId?: string, deviceName?: string) {
+  async register(
+    data: RegisterRequest,
+    deviceId?: string,
+    deviceName?: string,
+  ) {
     // Check rate limiting
-    await this.rateLimitService.checkRegistrationLimit(data.email, data.mobileNumber);
+    await this.rateLimitService.checkRegistrationLimit(
+      data.email,
+      data.mobileNumber,
+    );
 
     // Check if username exists
     const existingUsername = await this.prisma.user.findUnique({
       where: { username: data.username },
     });
     if (existingUsername) {
-      throw new ConflictException('Username already taken');
+      throw new ConflictException("Username already taken");
     }
 
     // Check if email exists
@@ -56,7 +68,7 @@ export class AuthService {
       where: { email: data.email },
     });
     if (existingEmail) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException("Email already registered");
     }
 
     // Check if phone exists
@@ -64,14 +76,18 @@ export class AuthService {
       where: { mobileNumber: data.mobileNumber },
     });
     if (existingPhone) {
-      throw new ConflictException('Phone number already registered');
+      throw new ConflictException("Phone number already registered");
     }
 
     // Validate age (must be 18+)
     const dob = new Date(data.dateOfBirth);
-    const age = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+    const age = Math.floor(
+      (Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+    );
     if (age < 18) {
-      throw new ForbiddenException('You must be at least 18 years old to register');
+      throw new ForbiddenException(
+        "You must be at least 18 years old to register",
+      );
     }
 
     // Hash password
@@ -90,7 +106,9 @@ export class AuthService {
         country: data.country,
         mobileNumber: data.mobileNumber,
         referralCode,
-        referredById: data.referralCode ? (await this.getUserByReferralCode(data.referralCode))?.id : null,
+        referredById: data.referralCode
+          ? (await this.getUserByReferralCode(data.referralCode))?.id
+          : null,
       },
     });
 
@@ -105,17 +123,14 @@ export class AuthService {
     });
 
     // Send OTP for email verification
-    await this.otpService.sendOTP(user.id, data.email, 'register');
-    
+    await this.otpService.sendOTP(user.id, data.email, "register");
+
     // Send OTP for phone verification
-    await this.otpService.sendOTP(user.id, data.mobileNumber, 'verify_phone');
+    await this.otpService.sendOTP(user.id, data.mobileNumber, "verify_phone");
 
     // Create session
-    const { accessToken, refreshToken } = await this.sessionService.createSession(
-      user.id,
-      deviceId,
-      deviceName,
-    );
+    const { accessToken, refreshToken } =
+      await this.sessionService.createSession(user.id, deviceId, deviceName);
 
     return {
       user: this.sanitizeUser(user),
@@ -137,28 +152,28 @@ export class AuthService {
     // Find user by email or username
     const user = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: data.identifier },
-          { username: data.identifier },
-        ],
+        OR: [{ email: data.identifier }, { username: data.identifier }],
       },
     });
 
     if (!user) {
       await this.rateLimitService.recordFailedLogin(data.identifier);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     // Verify password
-    const isValid = await this.passwordService.verify(user.passwordHash, data.password);
+    const isValid = await this.passwordService.verify(
+      user.passwordHash,
+      data.password,
+    );
     if (!isValid) {
       await this.rateLimitService.recordFailedLogin(data.identifier);
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException("Invalid credentials");
     }
 
     // Check if account is banned/deleted
     if (user.deletedAt) {
-      throw new ForbiddenException('Account has been deactivated');
+      throw new ForbiddenException("Account has been deactivated");
     }
 
     // Reset failed login attempts
@@ -171,11 +186,8 @@ export class AuthService {
     });
 
     // Create session
-    const { accessToken, refreshToken } = await this.sessionService.createSession(
-      user.id,
-      deviceId,
-      deviceName,
-    );
+    const { accessToken, refreshToken } =
+      await this.sessionService.createSession(user.id, deviceId, deviceName);
 
     return {
       user: this.sanitizeUser(user),
@@ -191,33 +203,43 @@ export class AuthService {
   // ============================================
 
   async verifyOTP(data: OTPVerify) {
-    const result = await this.otpService.verifyOTP(data.identifier, data.code, data.type);
-    
+    const result = await this.otpService.verifyOTP(
+      data.identifier,
+      data.code,
+      data.type,
+    );
+
     if (!result.valid) {
-      throw new BadRequestException(result.error ?? 'Invalid or expired OTP');
+      throw new BadRequestException(result.error ?? "Invalid or expired OTP");
     }
 
     // Update user verification status based on type
-    if (data.type === 'register' || data.type === 'verify_email') {
+    if (data.type === "register" || data.type === "verify_email") {
       await this.prisma.user.update({
         where: { email: data.identifier },
         data: { isEmailVerified: true, isVerified: true },
       });
-    } else if (data.type === 'verify_phone') {
-      const user = await this.prisma.user.findFirst({ where: { mobileNumber: data.identifier } });
-      if (!user) throw new NotFoundException('User not found');
+    } else if (data.type === "verify_phone") {
+      const user = await this.prisma.user.findFirst({
+        where: { mobileNumber: data.identifier },
+      });
+      if (!user) throw new NotFoundException("User not found");
       await this.prisma.user.update({
         where: { id: user.id },
         data: { isPhoneVerified: true },
       });
     }
 
-    return { success: true, message: 'Verification successful' };
+    return { success: true, message: "Verification successful" };
   }
 
-  async resendOTP(identifier: string, type: 'register' | 'login' | 'reset_password' | 'verify_phone' | 'verify_email') {
+  async resendOTP(
+    identifier: string,
+    type:
+      "register" | "login" | "reset_password" | "verify_phone" | "verify_email",
+  ) {
     await this.rateLimitService.checkResendOTPLimit(identifier);
-    
+
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [{ email: identifier }, { mobileNumber: identifier }],
@@ -225,13 +247,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     await this.otpService.sendOTP(user.id, identifier, type);
     await this.rateLimitService.recordResendOTP(identifier);
 
-    return { success: true, message: 'OTP sent' };
+    return { success: true, message: "OTP sent" };
   }
 
   // ============================================
@@ -245,19 +267,29 @@ export class AuthService {
 
     if (!user) {
       // Don't reveal if email exists
-      return { success: true, message: 'If the email exists, a reset link will be sent' };
+      return {
+        success: true,
+        message: "If the email exists, a reset link will be sent",
+      };
     }
 
-    await this.otpService.sendOTP(user.id, user.email, 'reset_password');
-    
-    return { success: true, message: 'If the email exists, a reset link will be sent' };
+    await this.otpService.sendOTP(user.id, user.email, "reset_password");
+
+    return {
+      success: true,
+      message: "If the email exists, a reset link will be sent",
+    };
   }
 
   async resetPassword(data: ResetPassword) {
-    const result = await this.otpService.verifyOTP(data.token, data.code, 'reset_password');
-    
+    const result = await this.otpService.verifyOTP(
+      data.token,
+      data.code,
+      "reset_password",
+    );
+
     if (!result.valid) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException("Invalid or expired reset token");
     }
 
     const user = await this.prisma.user.findUnique({
@@ -265,11 +297,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     const passwordHash = await this.passwordService.hash(data.password);
-    
+
     await this.prisma.user.update({
       where: { id: user.id },
       data: { passwordHash },
@@ -278,7 +310,7 @@ export class AuthService {
     // Invalidate all sessions
     await this.sessionService.invalidateAllUserSessions(user.id);
 
-    return { success: true, message: 'Password reset successful' };
+    return { success: true, message: "Password reset successful" };
   }
 
   // ============================================
@@ -286,14 +318,17 @@ export class AuthService {
   // ============================================
 
   async refreshTokens(data: RefreshToken) {
-    const session = await this.sessionService.validateRefreshToken(data.refreshToken);
-    
+    const session = await this.sessionService.validateRefreshToken(
+      data.refreshToken,
+    );
+
     if (!session) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException("Invalid or expired refresh token");
     }
 
     // Rotate refresh token
-    const { accessToken, refreshToken } = await this.sessionService.rotateSession(session.id);
+    const { accessToken, refreshToken } =
+      await this.sessionService.rotateSession(session.id);
 
     return { accessToken, refreshToken };
   }
@@ -309,16 +344,23 @@ export class AuthService {
       await this.sessionService.invalidateSession(sessionId);
     }
 
-    return { success: true, message: 'Logged out successfully' };
+    return { success: true, message: "Logged out successfully" };
   }
 
   // ============================================
   // OAUTH
   // ============================================
 
-  async oauthLogin(provider: 'google' | 'apple', idToken: string, deviceId?: string, deviceName?: string) {
+  async oauthLogin(
+    _provider: "google" | "apple",
+    _idToken: string,
+    _deviceId?: string,
+    _deviceName?: string,
+  ) {
     // OAuth not yet configured. Set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID in env.
-    throw new Error('OAuth not yet configured. Set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID in env.');
+    throw new Error(
+      "OAuth not yet configured. Set GOOGLE_CLIENT_ID / APPLE_CLIENT_ID in env.",
+    );
   }
 
   // ============================================
@@ -327,13 +369,14 @@ export class AuthService {
 
   private sanitizeUser(user: any) {
     const { passwordHash, ...sanitized } = user;
+    void passwordHash;
     return sanitized;
   }
 
   private async generateUniqueReferralCode(): Promise<string> {
     let code: string;
     let exists = true;
-    
+
     while (exists) {
       code = Math.random().toString(36).substring(2, 8).toUpperCase();
       const existing = await this.prisma.user.findUnique({
@@ -341,7 +384,7 @@ export class AuthService {
       });
       exists = !!existing;
     }
-    
+
     return code!;
   }
 
@@ -355,10 +398,7 @@ export class AuthService {
   async validateUser(identifier: string, password: string) {
     const user = await this.prisma.user.findFirst({
       where: {
-        OR: [
-          { email: identifier },
-          { username: identifier },
-        ],
+        OR: [{ email: identifier }, { username: identifier }],
       },
     });
 
@@ -366,7 +406,10 @@ export class AuthService {
       return null;
     }
 
-    const isValid = await this.passwordService.verify(user.passwordHash, password);
+    const isValid = await this.passwordService.verify(
+      user.passwordHash,
+      password,
+    );
     if (!isValid) {
       return null;
     }

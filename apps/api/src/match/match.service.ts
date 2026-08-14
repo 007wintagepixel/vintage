@@ -2,9 +2,9 @@
 // Match Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class MatchService {
@@ -32,7 +32,7 @@ export class MatchService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -62,16 +62,16 @@ export class MatchService {
       include: {
         players: true,
         events: {
-          orderBy: { sequence: 'asc' },
+          orderBy: { sequence: "asc" },
         },
       },
     });
 
-    if (!match) throw new Error('Match not found');
+    if (!match) throw new Error("Match not found");
 
     // Check if user is participant or admin
     const isParticipant = match.players.some((p: any) => p.userId === userId);
-    if (!isParticipant) throw new Error('Not authorized');
+    if (!isParticipant) throw new Error("Not authorized");
 
     return match;
   }
@@ -79,7 +79,7 @@ export class MatchService {
   async getLiveMatches() {
     return this.prisma.match.findMany({
       where: {
-        status: 'in_progress',
+        status: "in_progress",
       },
       include: {
         players: {
@@ -90,7 +90,7 @@ export class MatchService {
           },
         },
       },
-      orderBy: { startedAt: 'desc' },
+      orderBy: { startedAt: "desc" },
       take: 50,
     });
   }

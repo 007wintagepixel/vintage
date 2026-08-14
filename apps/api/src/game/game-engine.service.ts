@@ -2,7 +2,7 @@
 // Game Engine Service (Server-authoritative wrapper)
 // ============================================
 
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 
 import {
   createInitialGameState,
@@ -19,9 +19,19 @@ import {
   rollDice,
   createDiceRoll,
   DEFAULT_GAME_RULES,
-} from '@ludo-nexus/game-engine';
+} from "@ludo-nexus/game-engine";
 
-import type { GameRules, GameState, PlayerState, TokenState, Move, DiceRoll, PlayerColor, GameMode, MatchStatus } from '@ludo-nexus/shared-types';
+import type {
+  GameRules,
+  GameState,
+  PlayerState,
+  TokenState,
+  Move,
+  DiceRoll,
+  PlayerColor,
+  GameMode,
+  MatchStatus,
+} from "@ludo-nexus/shared-types";
 
 @Injectable()
 export class GameEngineService {
@@ -54,6 +64,6 @@ export class GameEngineService {
     allowBlockades: false,
     safeCells: [0, 8, 13, 21, 26, 34, 39, 47],
     teamMode: false,
-    botDifficulty: 'medium',
+    botDifficulty: "medium",
   };
 }

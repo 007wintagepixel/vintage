@@ -8,19 +8,21 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   ConnectedSocket,
-} from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
-import { Logger } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
+} from "@nestjs/websockets";
+import { Server, Socket } from "socket.io";
+import { Logger } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 
-import { PresenceService } from './presence.service';
+import { PresenceService } from "./presence.service";
 
 @WebSocketGateway({
-  cors: { origin: '*', credentials: true },
-  namespace: '/',
+  cors: { origin: "*", credentials: true },
+  namespace: "/",
 })
-export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class WebsocketGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   server: Server;
 
@@ -34,26 +36,27 @@ export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth?.token ?? client.handshake.query?.token;
+      const token =
+        client.handshake.auth?.token ?? client.handshake.query?.token;
       if (!token) {
         client.disconnect();
         return;
       }
 
       const payload = this.jwtService.verify(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        issuer: 'ludo-nexus',
-        audience: 'ludo-nexus-api',
+        secret: this.configService.get<string>("JWT_SECRET"),
+        issuer: "ludo-nexus",
+        audience: "ludo-nexus-api",
       });
 
       const userId = payload.sub;
-      
+
       // Register presence
       await this.presenceService.userConnected(userId, client.id);
 
       client.join(`user:${userId}`);
       this.logger.log(`User ${userId} connected via main gateway`);
-      client.emit('connected', { userId, socketId: client.id });
+      client.emit("connected", { userId, socketId: client.id });
     } catch (error) {
       this.logger.warn(`Main gateway connection failed: ${error.message}`);
       client.disconnect();
@@ -77,6 +80,6 @@ export class WebsocketGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   // Send notification
   sendNotification(userId: string, notification: any) {
-    this.server.to(`user:${userId}`).emit('notification', notification);
+    this.server.to(`user:${userId}`).emit("notification", notification);
   }
 }

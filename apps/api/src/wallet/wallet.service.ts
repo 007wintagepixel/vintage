@@ -2,11 +2,16 @@
 // Wallet Service
 // ============================================
 
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { LedgerService } from './ledger.service';
-import { TransactionService } from './transaction.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { LedgerService } from "./ledger.service";
+import { TransactionService } from "./transaction.service";
 
 @Injectable()
 export class WalletService {
@@ -35,7 +40,11 @@ export class WalletService {
       bonus: Number(wallet.bonus),
       locked: Number(wallet.locked),
       pending: Number(wallet.pending),
-      total: Number(wallet.available) + Number(wallet.bonus) + Number(wallet.locked) + Number(wallet.pending),
+      total:
+        Number(wallet.available) +
+        Number(wallet.bonus) +
+        Number(wallet.locked) +
+        Number(wallet.pending),
     };
   }
 
@@ -50,30 +59,107 @@ export class WalletService {
     };
   }
 
-  async addDemoCoins(userId: string, amount: number, description: string, referenceId?: string) {
-    return this.ledgerService.credit(userId, amount, 'available', 'bonus', referenceId ?? null, description);
+  async addDemoCoins(
+    userId: string,
+    amount: number,
+    description: string,
+    referenceId?: string,
+  ) {
+    return this.ledgerService.credit(
+      userId,
+      amount,
+      "available",
+      "bonus",
+      referenceId ?? null,
+      description,
+    );
   }
 
-  async deductDemoCoins(userId: string, amount: number, description: string, referenceId?: string) {
-    return this.ledgerService.debit(userId, amount, 'available', 'bonus', referenceId ?? null, description);
+  async deductDemoCoins(
+    userId: string,
+    amount: number,
+    description: string,
+    referenceId?: string,
+  ) {
+    return this.ledgerService.debit(
+      userId,
+      amount,
+      "available",
+      "bonus",
+      referenceId ?? null,
+      description,
+    );
   }
 
-  async lockFunds(userId: string, amount: number, referenceId: string, description: string) {
-    return this.ledgerService.transfer(userId, amount, 'available', 'locked', referenceId, description);
+  async lockFunds(
+    userId: string,
+    amount: number,
+    referenceId: string,
+    description: string,
+  ) {
+    return this.ledgerService.transfer(
+      userId,
+      amount,
+      "available",
+      "locked",
+      referenceId,
+      description,
+    );
   }
 
-  async unlockFunds(userId: string, amount: number, referenceId: string, description: string) {
-    return this.ledgerService.transfer(userId, amount, 'locked', 'available', referenceId, description);
+  async unlockFunds(
+    userId: string,
+    amount: number,
+    referenceId: string,
+    description: string,
+  ) {
+    return this.ledgerService.transfer(
+      userId,
+      amount,
+      "locked",
+      "available",
+      referenceId,
+      description,
+    );
   }
 
-  async settleWin(userId: string, amount: number, referenceId: string, description: string) {
+  async settleWin(
+    userId: string,
+    amount: number,
+    referenceId: string,
+    description: string,
+  ) {
     // Move from locked to available with winnings
-    await this.ledgerService.debit(userId, amount, 'locked', 'match_entry', referenceId, `Match entry refund`);
-    return this.ledgerService.credit(userId, amount * 2, 'available', 'match_win', referenceId, description);
+    await this.ledgerService.debit(
+      userId,
+      amount,
+      "locked",
+      "match_entry",
+      referenceId,
+      `Match entry refund`,
+    );
+    return this.ledgerService.credit(
+      userId,
+      amount * 2,
+      "available",
+      "match_win",
+      referenceId,
+      description,
+    );
   }
 
-  async getTransactions(userId: string, filters: any = {}, page = 1, limit = 20) {
-    return this.transactionService.getTransactions(userId, filters, page, limit);
+  async getTransactions(
+    userId: string,
+    filters: any = {},
+    page = 1,
+    limit = 20,
+  ) {
+    return this.transactionService.getTransactions(
+      userId,
+      filters,
+      page,
+      limit,
+    );
   }
 
   async getTransactionById(userId: string, transactionId: string) {
@@ -82,7 +168,7 @@ export class WalletService {
     });
 
     if (!transaction || transaction.userId !== userId) {
-      throw new NotFoundException('Transaction not found');
+      throw new NotFoundException("Transaction not found");
     }
 
     return transaction;

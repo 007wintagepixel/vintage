@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DoorOpen,
   Lock,
@@ -16,33 +16,63 @@ import {
   Circle,
   Check,
   Plus,
-} from 'lucide-react';
+} from "lucide-react";
 
-type GameMode = 'classic' | 'quick';
-type Privacy = 'public' | 'private';
-type PlayerColor = 'red' | 'green' | 'yellow' | 'blue';
+type GameMode = "classic" | "quick";
+type Privacy = "public" | "private";
+type PlayerColor = "red" | "green" | "yellow" | "blue";
 
-const playerColors: { id: PlayerColor; label: string; bg: string; border: string; glow: string }[] = [
-  { id: 'red', label: 'Red', bg: 'bg-player-red', border: 'border-player-red', glow: 'shadow-[0_0_20px_rgba(239,68,68,0.5)]' },
-  { id: 'green', label: 'Green', bg: 'bg-player-green', border: 'border-player-green', glow: 'shadow-[0_0_20px_rgba(34,197,94,0.5)]' },
-  { id: 'yellow', label: 'Yellow', bg: 'bg-player-yellow', border: 'border-player-yellow', glow: 'shadow-[0_0_20px_rgba(234,179,8,0.5)]' },
-  { id: 'blue', label: 'Blue', bg: 'bg-player-blue', border: 'border-player-blue', glow: 'shadow-[0_0_20px_rgba(59,130,246,0.5)]' },
+const playerColors: {
+  id: PlayerColor;
+  label: string;
+  bg: string;
+  border: string;
+  glow: string;
+}[] = [
+  {
+    id: "red",
+    label: "Red",
+    bg: "bg-player-red",
+    border: "border-player-red",
+    glow: "shadow-[0_0_20px_rgba(239,68,68,0.5)]",
+  },
+  {
+    id: "green",
+    label: "Green",
+    bg: "bg-player-green",
+    border: "border-player-green",
+    glow: "shadow-[0_0_20px_rgba(34,197,94,0.5)]",
+  },
+  {
+    id: "yellow",
+    label: "Yellow",
+    bg: "bg-player-yellow",
+    border: "border-player-yellow",
+    glow: "shadow-[0_0_20px_rgba(234,179,8,0.5)]",
+  },
+  {
+    id: "blue",
+    label: "Blue",
+    bg: "bg-player-blue",
+    border: "border-player-blue",
+    glow: "shadow-[0_0_20px_rgba(59,130,246,0.5)]",
+  },
 ];
 
 const entryFees = [0, 50, 100, 250, 500, 1000];
 
 export default function CreateRoomPage() {
   const router = useRouter();
-  const [roomName, setRoomName] = useState('');
-  const [gameMode, setGameMode] = useState<GameMode>('classic');
+  const [roomName, setRoomName] = useState("");
+  const [gameMode, setGameMode] = useState<GameMode>("classic");
   const [maxPlayers, setMaxPlayers] = useState(4);
-  const [privacy, setPrivacy] = useState<Privacy>('private');
+  const [privacy, setPrivacy] = useState<Privacy>("private");
   const [entryFee, setEntryFee] = useState(100);
-  const [selectedColor, setSelectedColor] = useState<PlayerColor>('red');
+  const [selectedColor, setSelectedColor] = useState<PlayerColor>("red");
 
   const generateRoomCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
     for (let i = 0; i < 6; i++) {
       code += chars[Math.floor(Math.random() * chars.length)];
     }
@@ -63,8 +93,12 @@ export default function CreateRoomPage() {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
       >
         <div>
-          <h1 className="font-display text-display-md gradient-text">Create Room</h1>
-          <p className="text-text-secondary mt-1">Set up a private match and invite your friends</p>
+          <h1 className="font-display text-display-md gradient-text">
+            Create Room
+          </h1>
+          <p className="text-text-secondary mt-1">
+            Set up a private match and invite your friends
+          </p>
         </div>
         <Link href="/game-modes" className="btn-ghost gap-2">
           <ArrowLeft className="w-4 h-4" />
@@ -94,7 +128,9 @@ export default function CreateRoomPage() {
               maxLength={30}
               className="input"
             />
-            <p className="text-caption text-text-muted mt-2">{roomName.length}/30 characters</p>
+            <p className="text-caption text-text-muted mt-2">
+              {roomName.length}/30 characters
+            </p>
           </div>
 
           {/* Game Mode */}
@@ -102,24 +138,32 @@ export default function CreateRoomPage() {
             <label className="label">Game Mode</label>
             <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setGameMode('classic')}
+                onClick={() => setGameMode("classic")}
                 className={`glass-card-hover p-5 rounded-2xl text-left transition-all ${
-                  gameMode === 'classic' ? 'border-primary-glow shadow-glow bg-primary-glow/5' : ''
+                  gameMode === "classic"
+                    ? "border-primary-glow shadow-glow bg-primary-glow/5"
+                    : ""
                 }`}
               >
                 <Clock className="w-6 h-6 text-primary-glow mb-3" />
                 <div className="font-display text-heading-sm">Classic</div>
-                <p className="text-body-sm text-text-secondary mt-1">Standard rules, all tokens must reach home</p>
+                <p className="text-body-sm text-text-secondary mt-1">
+                  Standard rules, all tokens must reach home
+                </p>
               </button>
               <button
-                onClick={() => setGameMode('quick')}
+                onClick={() => setGameMode("quick")}
                 className={`glass-card-hover p-5 rounded-2xl text-left transition-all ${
-                  gameMode === 'quick' ? 'border-primary-glow shadow-glow bg-primary-glow/5' : ''
+                  gameMode === "quick"
+                    ? "border-primary-glow shadow-glow bg-primary-glow/5"
+                    : ""
                 }`}
               >
                 <Zap className="w-6 h-6 text-secondary-glow mb-3" />
                 <div className="font-display text-heading-sm">Quick</div>
-                <p className="text-body-sm text-text-secondary mt-1">Faster pace, first token to finish wins</p>
+                <p className="text-body-sm text-text-secondary mt-1">
+                  Faster pace, first token to finish wins
+                </p>
               </button>
             </div>
           </div>
@@ -136,11 +180,15 @@ export default function CreateRoomPage() {
                   key={n}
                   onClick={() => setMaxPlayers(n)}
                   className={`glass-card-hover p-4 rounded-2xl text-center transition-all ${
-                    maxPlayers === n ? 'border-primary-glow shadow-glow bg-primary-glow/5' : ''
+                    maxPlayers === n
+                      ? "border-primary-glow shadow-glow bg-primary-glow/5"
+                      : ""
                   }`}
                 >
                   <div className="font-display text-display-sm">{n}</div>
-                  <div className="text-caption text-text-muted mt-1">Players</div>
+                  <div className="text-caption text-text-muted mt-1">
+                    Players
+                  </div>
                 </button>
               ))}
             </div>
@@ -151,24 +199,32 @@ export default function CreateRoomPage() {
             <label className="label">Privacy</label>
             <div className="grid grid-cols-2 gap-4">
               <button
-                onClick={() => setPrivacy('public')}
+                onClick={() => setPrivacy("public")}
                 className={`glass-card-hover p-5 rounded-2xl text-left transition-all ${
-                  privacy === 'public' ? 'border-primary-glow shadow-glow bg-primary-glow/5' : ''
+                  privacy === "public"
+                    ? "border-primary-glow shadow-glow bg-primary-glow/5"
+                    : ""
                 }`}
               >
                 <Globe className="w-6 h-6 text-accent-green mb-3" />
                 <div className="font-display text-heading-sm">Public</div>
-                <p className="text-body-sm text-text-secondary mt-1">Anyone can find and join</p>
+                <p className="text-body-sm text-text-secondary mt-1">
+                  Anyone can find and join
+                </p>
               </button>
               <button
-                onClick={() => setPrivacy('private')}
+                onClick={() => setPrivacy("private")}
                 className={`glass-card-hover p-5 rounded-2xl text-left transition-all ${
-                  privacy === 'private' ? 'border-primary-glow shadow-glow bg-primary-glow/5' : ''
+                  privacy === "private"
+                    ? "border-primary-glow shadow-glow bg-primary-glow/5"
+                    : ""
                 }`}
               >
                 <Lock className="w-6 h-6 text-accent-magenta mb-3" />
                 <div className="font-display text-heading-sm">Private</div>
-                <p className="text-body-sm text-text-secondary mt-1">Invite only with room code</p>
+                <p className="text-body-sm text-text-secondary mt-1">
+                  Invite only with room code
+                </p>
               </button>
             </div>
           </div>
@@ -185,16 +241,24 @@ export default function CreateRoomPage() {
                   key={fee}
                   onClick={() => setEntryFee(fee)}
                   className={`glass-card-hover p-3 rounded-xl text-center transition-all ${
-                    entryFee === fee ? 'border-secondary-glow shadow-glow-gold bg-secondary-glow/5' : ''
+                    entryFee === fee
+                      ? "border-secondary-glow shadow-glow-gold bg-secondary-glow/5"
+                      : ""
                   }`}
                 >
-                  <div className="font-display text-heading-sm">{fee === 0 ? 'Free' : fee}</div>
-                  {fee > 0 && <div className="text-caption text-text-muted">coins</div>}
+                  <div className="font-display text-heading-sm">
+                    {fee === 0 ? "Free" : fee}
+                  </div>
+                  {fee > 0 && (
+                    <div className="text-caption text-text-muted">coins</div>
+                  )}
                 </button>
               ))}
             </div>
             <div className="mt-4 glass-card p-3 rounded-xl flex items-center justify-between">
-              <span className="text-body-sm text-text-secondary">Total Pot</span>
+              <span className="text-body-sm text-text-secondary">
+                Total Pot
+              </span>
               <span className="font-display text-heading-md gradient-text-gold">
                 {entryFee * maxPlayers} coins
               </span>
@@ -218,13 +282,21 @@ export default function CreateRoomPage() {
                   key={color.id}
                   onClick={() => setSelectedColor(color.id)}
                   className={`glass-card-hover p-4 rounded-2xl flex flex-col items-center gap-3 transition-all ${
-                    selectedColor === color.id ? `border-2 ${color.border} ${color.glow}` : ''
+                    selectedColor === color.id
+                      ? `border-2 ${color.border} ${color.glow}`
+                      : ""
                   }`}
                 >
-                  <div className={`w-10 h-10 rounded-full ${color.bg} flex items-center justify-center`}>
-                    {selectedColor === color.id && <Check className="w-5 h-5 text-white" />}
+                  <div
+                    className={`w-10 h-10 rounded-full ${color.bg} flex items-center justify-center`}
+                  >
+                    {selectedColor === color.id && (
+                      <Check className="w-5 h-5 text-white" />
+                    )}
                   </div>
-                  <span className="text-body-sm font-medium">{color.label}</span>
+                  <span className="text-body-sm font-medium">
+                    {color.label}
+                  </span>
                 </button>
               ))}
             </div>
@@ -236,7 +308,9 @@ export default function CreateRoomPage() {
             <div className="space-y-3">
               <div className="flex justify-between text-body-sm">
                 <span className="text-text-muted">Name</span>
-                <span className="text-text-primary">{roomName || 'Untitled Room'}</span>
+                <span className="text-text-primary">
+                  {roomName || "Untitled Room"}
+                </span>
               </div>
               <div className="flex justify-between text-body-sm">
                 <span className="text-text-muted">Mode</span>
@@ -252,7 +326,9 @@ export default function CreateRoomPage() {
               </div>
               <div className="flex justify-between text-body-sm">
                 <span className="text-text-muted">Entry Fee</span>
-                <span className="text-text-primary">{entryFee === 0 ? 'Free' : `${entryFee} coins`}</span>
+                <span className="text-text-primary">
+                  {entryFee === 0 ? "Free" : `${entryFee} coins`}
+                </span>
               </div>
               <div className="flex justify-between text-body-sm items-center pt-2 border-t border-surface-border">
                 <span className="text-text-muted">Your Color</span>
@@ -262,14 +338,19 @@ export default function CreateRoomPage() {
                       playerColors.find((c) => c.id === selectedColor)?.bg
                     } rounded-full fill-current`}
                   />
-                  <span className="text-text-primary capitalize">{selectedColor}</span>
+                  <span className="text-text-primary capitalize">
+                    {selectedColor}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Create Button */}
-          <button onClick={handleCreateRoom} className="btn-primary w-full gap-2 text-body-lg py-4">
+          <button
+            onClick={handleCreateRoom}
+            className="btn-primary w-full gap-2 text-body-lg py-4"
+          >
             <Plus className="w-5 h-5" />
             Create Room
           </button>

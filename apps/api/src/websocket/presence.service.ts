@@ -2,7 +2,7 @@
 // Presence Service (User online status)
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
 @Injectable()
 export class PresenceService {
@@ -35,7 +35,9 @@ export class PresenceService {
   }
 
   isUserOnline(userId: string): boolean {
-    return this.userSockets.has(userId) && this.userSockets.get(userId)!.size > 0;
+    return (
+      this.userSockets.has(userId) && this.userSockets.get(userId)!.size > 0
+    );
   }
 
   getUserSocketCount(userId: string): number {

@@ -1,0 +1,50 @@
+{
+  "name": "@ludo-nexus/admin",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "clean": "rm -rf .next node_modules/.cache"
+  },
+  "dependencies": {
+    "@ludo-nexus/api-client": "workspace:*",
+    "@ludo-nexus/shared-types": "workspace:*",
+    "@ludo-nexus/ui": "workspace:*",
+    "@ludo-nexus/validation": "workspace:*",
+    "@tanstack/react-query": "^5.24.0",
+    "clsx": "^2.1.0",
+    "date-fns": "^3.6.0",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.358.0",
+    "next": "^15.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "recharts": "^2.12.0",
+    "tailwind-merge": "^2.2.0",
+    "zod": "^3.23.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^14.2.0",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^15.0.0",
+    "jsdom": "^24.0.0",
+    "postcss": "^8.4.35",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.0"
+  }
+}

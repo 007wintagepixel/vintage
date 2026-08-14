@@ -1,0 +1,58 @@
+{
+  "cli": {
+    "version": ">= 5.10.0",
+    "requireLogin": true
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Debug"
+      },
+      "android": {
+        "resourceClass": "m-medium",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "simulator": false
+      },
+      "android": {
+        "resourceClass": "m-medium",
+        "gradleCommand": ":app:bundleRelease"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "ios": {
+        "resourceClass": "m-medium",
+        "buildConfiguration": "Release",
+        "simulator": false
+      },
+      "android": {
+        "resourceClass": "m-medium",
+        "gradleCommand": ":app:bundleRelease"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "your-app-store-connect-app-id",
+        "appleTeamId": "YOUR_TEAM_ID"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "production",
+        "changesNotSentForReview": true
+      }
+    }
+  }
+}

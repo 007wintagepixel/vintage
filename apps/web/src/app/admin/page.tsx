@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   Users,
   Gamepad2,
@@ -19,65 +19,150 @@ import {
   Play,
   AlertTriangle,
   CheckCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 const stats = [
   {
-    label: 'Total Users',
-    value: '12,847',
-    trend: '+8.2%',
+    label: "Total Users",
+    value: "12,847",
+    trend: "+8.2%",
     trendUp: true,
     icon: Users,
-    color: 'text-primary-glow',
-    bg: 'bg-primary-glow/20',
+    color: "text-primary-glow",
+    bg: "bg-primary-glow/20",
   },
   {
-    label: 'Active Matches',
-    value: '342',
-    trend: '+12.5%',
+    label: "Active Matches",
+    value: "342",
+    trend: "+12.5%",
     trendUp: true,
     icon: Gamepad2,
-    color: 'text-accent-magenta',
-    bg: 'bg-accent-magenta/20',
+    color: "text-accent-magenta",
+    bg: "bg-accent-magenta/20",
   },
   {
-    label: 'Total Revenue',
-    value: '8.4M',
-    trend: '+5.7%',
+    label: "Total Revenue",
+    value: "8.4M",
+    trend: "+5.7%",
     trendUp: true,
     icon: Coins,
-    color: 'text-secondary-glow',
-    bg: 'bg-secondary-glow/20',
-    suffix: ' coins',
+    color: "text-secondary-glow",
+    bg: "bg-secondary-glow/20",
+    suffix: " coins",
   },
   {
-    label: 'Pending KYC',
-    value: '23',
-    trend: '-3.1%',
+    label: "Pending KYC",
+    value: "23",
+    trend: "-3.1%",
     trendUp: false,
     icon: ShieldCheck,
-    color: 'text-accent-red',
-    bg: 'bg-accent-red/20',
+    color: "text-accent-red",
+    bg: "bg-accent-red/20",
   },
 ];
 
 const recentActivity = [
-  { id: 1, type: 'user', message: 'New user registered: gamerX2024', time: '2 min ago', icon: UserPlus, color: 'text-primary-glow' },
-  { id: 2, type: 'match', message: 'Match #4291 started between 4 players', time: '8 min ago', icon: Play, color: 'text-accent-magenta' },
-  { id: 3, type: 'alert', message: 'User flagged for suspicious activity: proGamer', time: '15 min ago', icon: AlertTriangle, color: 'text-accent-red' },
-  { id: 4, type: 'match', message: 'Match #4289 completed — prize pool 5,000 coins', time: '22 min ago', icon: CheckCircle, color: 'text-accent-green' },
-  { id: 5, type: 'user', message: 'KYC verified for user: championKing', time: '35 min ago', icon: ShieldCheck, color: 'text-accent-green' },
-  { id: 6, type: 'match', message: 'Match #4285 cancelled by admin', time: '1 hour ago', icon: Ban, color: 'text-accent-red' },
-  { id: 7, type: 'user', message: 'New user registered: diceRoller99', time: '1 hour ago', icon: UserPlus, color: 'text-primary-glow' },
-  { id: 8, type: 'match', message: 'Tournament "Weekend Cup" registration opened', time: '2 hours ago', icon: Trophy, color: 'text-secondary-glow' },
-  { id: 9, type: 'alert', message: 'Failed withdrawal attempt by user: luckyOne', time: '3 hours ago', icon: AlertTriangle, color: 'text-accent-red' },
-  { id: 10, type: 'user', message: 'User banned: cheaterAccount', time: '4 hours ago', icon: Ban, color: 'text-accent-red' },
+  {
+    id: 1,
+    type: "user",
+    message: "New user registered: gamerX2024",
+    time: "2 min ago",
+    icon: UserPlus,
+    color: "text-primary-glow",
+  },
+  {
+    id: 2,
+    type: "match",
+    message: "Match #4291 started between 4 players",
+    time: "8 min ago",
+    icon: Play,
+    color: "text-accent-magenta",
+  },
+  {
+    id: 3,
+    type: "alert",
+    message: "User flagged for suspicious activity: proGamer",
+    time: "15 min ago",
+    icon: AlertTriangle,
+    color: "text-accent-red",
+  },
+  {
+    id: 4,
+    type: "match",
+    message: "Match #4289 completed — prize pool 5,000 coins",
+    time: "22 min ago",
+    icon: CheckCircle,
+    color: "text-accent-green",
+  },
+  {
+    id: 5,
+    type: "user",
+    message: "KYC verified for user: championKing",
+    time: "35 min ago",
+    icon: ShieldCheck,
+    color: "text-accent-green",
+  },
+  {
+    id: 6,
+    type: "match",
+    message: "Match #4285 cancelled by admin",
+    time: "1 hour ago",
+    icon: Ban,
+    color: "text-accent-red",
+  },
+  {
+    id: 7,
+    type: "user",
+    message: "New user registered: diceRoller99",
+    time: "1 hour ago",
+    icon: UserPlus,
+    color: "text-primary-glow",
+  },
+  {
+    id: 8,
+    type: "match",
+    message: 'Tournament "Weekend Cup" registration opened',
+    time: "2 hours ago",
+    icon: Trophy,
+    color: "text-secondary-glow",
+  },
+  {
+    id: 9,
+    type: "alert",
+    message: "Failed withdrawal attempt by user: luckyOne",
+    time: "3 hours ago",
+    icon: AlertTriangle,
+    color: "text-accent-red",
+  },
+  {
+    id: 10,
+    type: "user",
+    message: "User banned: cheaterAccount",
+    time: "4 hours ago",
+    icon: Ban,
+    color: "text-accent-red",
+  },
 ];
 
 const quickActions = [
-  { label: 'Create Tournament', href: '/admin/tournaments', icon: Trophy, color: 'from-secondary-glow to-accent-orange' },
-  { label: 'Ban User', href: '/admin/users', icon: Ban, color: 'from-accent-red to-accent-magenta' },
-  { label: 'Review KYC', href: '/admin/users', icon: FileCheck, color: 'from-primary-glow to-accent-cyan' },
+  {
+    label: "Create Tournament",
+    href: "/admin/tournaments",
+    icon: Trophy,
+    color: "from-secondary-glow to-accent-orange",
+  },
+  {
+    label: "Ban User",
+    href: "/admin/users",
+    icon: Ban,
+    color: "from-accent-red to-accent-magenta",
+  },
+  {
+    label: "Review KYC",
+    href: "/admin/users",
+    icon: FileCheck,
+    color: "from-primary-glow to-accent-cyan",
+  },
 ];
 
 export default function AdminDashboardPage() {
@@ -88,8 +173,12 @@ export default function AdminDashboardPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h2 className="font-display text-display-md gradient-text">Dashboard</h2>
-        <p className="text-text-secondary mt-1">Platform overview and key metrics</p>
+        <h2 className="font-display text-display-md gradient-text">
+          Dashboard
+        </h2>
+        <p className="text-text-secondary mt-1">
+          Platform overview and key metrics
+        </p>
       </motion.div>
 
       {/* Stat Cards */}
@@ -103,12 +192,14 @@ export default function AdminDashboardPage() {
             className="glass-card-hover p-6 rounded-2xl"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}>
+              <div
+                className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center`}
+              >
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
               <div
                 className={`flex items-center gap-1 text-caption font-medium ${
-                  stat.trendUp ? 'text-accent-green' : 'text-accent-red'
+                  stat.trendUp ? "text-accent-green" : "text-accent-red"
                 }`}
               >
                 {stat.trendUp ? (
@@ -122,11 +213,17 @@ export default function AdminDashboardPage() {
             <div className="font-display text-display-sm text-text-primary">
               {stat.value}
               {stat.suffix && (
-                <span className="text-body-sm text-text-muted ml-1">{stat.suffix}</span>
+                <span className="text-body-sm text-text-muted ml-1">
+                  {stat.suffix}
+                </span>
               )}
             </div>
-            <div className="text-body-sm text-text-secondary mt-1">{stat.label}</div>
-            <div className="text-caption text-text-muted mt-2">from last week</div>
+            <div className="text-body-sm text-text-secondary mt-1">
+              {stat.label}
+            </div>
+            <div className="text-caption text-text-muted mt-2">
+              from last week
+            </div>
           </motion.div>
         ))}
       </div>
@@ -163,11 +260,11 @@ export default function AdminDashboardPage() {
                     key={i}
                     initial={{ height: 0 }}
                     animate={{ height: `${h}%` }}
-                    transition={{ delay: 0.5 + i * 0.05, type: 'spring' }}
+                    transition={{ delay: 0.5 + i * 0.05, type: "spring" }}
                     className="flex-1 rounded-t-md bg-gradient-to-t from-primary-glow/30 to-primary-glow"
-                    style={{ maxWidth: '20px' }}
+                    style={{ maxWidth: "20px" }}
                   />
-                )
+                ),
               )}
             </div>
             <div className="absolute top-4 left-4 text-caption text-text-muted">
@@ -219,18 +316,22 @@ export default function AdminDashboardPage() {
             </h4>
             <div className="space-y-2">
               {[
-                { label: 'Game Server', status: 'Operational' },
-                { label: 'Payment Gateway', status: 'Operational' },
-                { label: 'Matchmaking', status: 'Operational' },
+                { label: "Game Server", status: "Operational" },
+                { label: "Payment Gateway", status: "Operational" },
+                { label: "Matchmaking", status: "Operational" },
               ].map((sys) => (
                 <div
                   key={sys.label}
                   className="flex items-center justify-between"
                 >
-                  <span className="text-caption text-text-muted">{sys.label}</span>
+                  <span className="text-caption text-text-muted">
+                    {sys.label}
+                  </span>
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
-                    <span className="text-caption text-accent-green">{sys.status}</span>
+                    <span className="text-caption text-accent-green">
+                      {sys.status}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -264,7 +365,9 @@ export default function AdminDashboardPage() {
               transition={{ delay: 0.6 + index * 0.05 }}
               className="flex items-center gap-4 px-3 py-3 rounded-xl hover:bg-surface-tertiary/50 transition-colors"
             >
-              <div className={`w-8 h-8 rounded-lg bg-surface-tertiary flex items-center justify-center flex-shrink-0`}>
+              <div
+                className={`w-8 h-8 rounded-lg bg-surface-tertiary flex items-center justify-center flex-shrink-0`}
+              >
                 <activity.icon className={`w-4 h-4 ${activity.color}`} />
               </div>
               <span className="text-body-sm text-text-primary flex-1">

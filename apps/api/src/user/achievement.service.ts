@@ -2,9 +2,9 @@
 // Achievement Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class AchievementService {
@@ -15,94 +15,94 @@ export class AchievementService {
   // Achievement definitions
   private readonly ACHIEVEMENTS = [
     {
-      code: 'first_win',
-      name: 'First Win',
-      description: 'Win your first match',
-      icon: '🏆',
-      category: 'gameplay',
-      requirement: { type: 'wins', value: 1 },
-      reward: { type: 'demo_coins', value: 100 },
+      code: "first_win",
+      name: "First Win",
+      description: "Win your first match",
+      icon: "🏆",
+      category: "gameplay",
+      requirement: { type: "wins", value: 1 },
+      reward: { type: "demo_coins", value: 100 },
     },
     {
-      code: 'hat_trick',
-      name: 'Hat Trick',
-      description: 'Win 3 matches in a row',
-      icon: '🎩',
-      category: 'streak',
-      requirement: { type: 'win_streak', value: 3 },
-      reward: { type: 'demo_coins', value: 500 },
+      code: "hat_trick",
+      name: "Hat Trick",
+      description: "Win 3 matches in a row",
+      icon: "🎩",
+      category: "streak",
+      requirement: { type: "win_streak", value: 3 },
+      reward: { type: "demo_coins", value: 500 },
     },
     {
-      code: 'tournament_champion',
-      name: 'Tournament Champion',
-      description: 'Win a tournament',
-      icon: '👑',
-      category: 'tournament',
-      requirement: { type: 'tournament_wins', value: 1 },
-      reward: { type: 'demo_coins', value: 1000 },
+      code: "tournament_champion",
+      name: "Tournament Champion",
+      description: "Win a tournament",
+      icon: "👑",
+      category: "tournament",
+      requirement: { type: "tournament_wins", value: 1 },
+      reward: { type: "demo_coins", value: 1000 },
     },
     {
-      code: 'ludo_legend',
-      name: 'Ludo Legend',
-      description: 'Win 100 matches',
-      icon: '⭐',
-      category: 'gameplay',
-      requirement: { type: 'wins', value: 100 },
-      reward: { type: 'demo_coins', value: 5000 },
+      code: "ludo_legend",
+      name: "Ludo Legend",
+      description: "Win 100 matches",
+      icon: "⭐",
+      category: "gameplay",
+      requirement: { type: "wins", value: 100 },
+      reward: { type: "demo_coins", value: 5000 },
     },
     {
-      code: 'perfect_roll',
-      name: 'Perfect Roll',
-      description: 'Roll three sixes in a row',
-      icon: '🎲',
-      category: 'special',
-      requirement: { type: 'three_sixes', value: 1 },
-      reward: { type: 'badge', value: 0 },
+      code: "perfect_roll",
+      name: "Perfect Roll",
+      description: "Roll three sixes in a row",
+      icon: "🎲",
+      category: "special",
+      requirement: { type: "three_sixes", value: 1 },
+      reward: { type: "badge", value: 0 },
     },
     {
-      code: 'capture_master',
-      name: 'Capture Master',
-      description: 'Capture 50 opponent tokens',
-      icon: '🎯',
-      category: 'gameplay',
-      requirement: { type: 'captures', value: 50 },
-      reward: { type: 'demo_coins', value: 1000 },
+      code: "capture_master",
+      name: "Capture Master",
+      description: "Capture 50 opponent tokens",
+      icon: "🎯",
+      category: "gameplay",
+      requirement: { type: "captures", value: 50 },
+      reward: { type: "demo_coins", value: 1000 },
     },
     {
-      code: 'safe_zone_expert',
-      name: 'Safe Zone Expert',
-      description: 'Land on safe cells 100 times',
-      icon: '🛡️',
-      category: 'gameplay',
-      requirement: { type: 'safe_cell_landings', value: 100 },
-      reward: { type: 'demo_coins', value: 500 },
+      code: "safe_zone_expert",
+      name: "Safe Zone Expert",
+      description: "Land on safe cells 100 times",
+      icon: "🛡️",
+      category: "gameplay",
+      requirement: { type: "safe_cell_landings", value: 100 },
+      reward: { type: "demo_coins", value: 500 },
     },
     {
-      code: 'ten_win_streak',
-      name: 'Ten Win Streak',
-      description: 'Win 10 matches in a row',
-      icon: '🔥',
-      category: 'streak',
-      requirement: { type: 'win_streak', value: 10 },
-      reward: { type: 'demo_coins', value: 2000 },
+      code: "ten_win_streak",
+      name: "Ten Win Streak",
+      description: "Win 10 matches in a row",
+      icon: "🔥",
+      category: "streak",
+      requirement: { type: "win_streak", value: 10 },
+      reward: { type: "demo_coins", value: 2000 },
     },
     {
-      code: 'team_champion',
-      name: 'Team Champion',
-      description: 'Win 10 team matches',
-      icon: '🤝',
-      category: 'team',
-      requirement: { type: 'team_wins', value: 10 },
-      reward: { type: 'demo_coins', value: 1000 },
+      code: "team_champion",
+      name: "Team Champion",
+      description: "Win 10 team matches",
+      icon: "🤝",
+      category: "team",
+      requirement: { type: "team_wins", value: 10 },
+      reward: { type: "demo_coins", value: 1000 },
     },
     {
-      code: 'hundred_matches',
-      name: 'Centurion',
-      description: 'Play 100 matches',
-      icon: '💯',
-      category: 'gameplay',
-      requirement: { type: 'matches', value: 100 },
-      reward: { type: 'demo_coins', value: 1000 },
+      code: "hundred_matches",
+      name: "Centurion",
+      description: "Play 100 matches",
+      icon: "💯",
+      category: "gameplay",
+      requirement: { type: "matches", value: 100 },
+      reward: { type: "demo_coins", value: 1000 },
     },
   ];
 
@@ -114,38 +114,46 @@ export class AchievementService {
         update: ach,
       });
     }
-    this.logger.log('Achievements initialized');
+    this.logger.log("Achievements initialized");
   }
 
   async getAllAchievements() {
     return this.prisma.achievement.findMany({
-      orderBy: { category: 'asc' },
+      orderBy: { category: "asc" },
     });
   }
 
   async getUserAchievements(userId: string) {
-      const userAchievements = await this.prisma.userAchievement.findMany({
-        where: { userId },
-        include: { achievement: true },
-      });
+    const userAchievements = await this.prisma.userAchievement.findMany({
+      where: { userId },
+      include: { achievement: true },
+    });
 
-      const allAchievements = await this.getAllAchievements();
-      const earnedCodes = new Set(userAchievements.map((ua: any) => ua.achievement.code));
+    const allAchievements = await this.getAllAchievements();
+    const earnedCodes = new Set(
+      userAchievements.map((ua: any) => ua.achievement.code),
+    );
 
-      return allAchievements.map((ach: any) => ({
-        ...ach,
-        earned: earnedCodes.has(ach.code),
-        unlockedAt: userAchievements.find((ua: any) => ua.achievement.code === ach.code)?.unlockedAt,
-        progress: userAchievements.find((ua: any) => ua.achievement.code === ach.code)?.progress ?? 0,
-      }));
-    }
+    return allAchievements.map((ach: any) => ({
+      ...ach,
+      earned: earnedCodes.has(ach.code),
+      unlockedAt: userAchievements.find(
+        (ua: any) => ua.achievement.code === ach.code,
+      )?.unlockedAt,
+      progress:
+        userAchievements.find((ua: any) => ua.achievement.code === ach.code)
+          ?.progress ?? 0,
+    }));
+  }
 
   async checkAndUnlockAchievements(userId: string, stats: any) {
     const userAchievements = await this.prisma.userAchievement.findMany({
       where: { userId, isCompleted: true },
       select: { achievementId: true },
     });
-    const earnedIds = new Set(userAchievements.map((ua: any) => ua.achievementId));
+    const earnedIds = new Set(
+      userAchievements.map((ua: any) => ua.achievementId),
+    );
 
     const newAchievements = [];
 
@@ -159,35 +167,35 @@ export class AchievementService {
       let shouldUnlock = false;
 
       switch (ach.requirement.type) {
-        case 'wins':
+        case "wins":
           progress = stats.wins ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'win_streak':
+        case "win_streak":
           progress = stats.currentStreak ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'tournament_wins':
+        case "tournament_wins":
           progress = stats.tournamentWins ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'matches':
+        case "matches":
           progress = stats.totalMatches ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'team_wins':
+        case "team_wins":
           progress = stats.teamWins ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'captures':
+        case "captures":
           progress = stats.totalCaptures ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'safe_cell_landings':
+        case "safe_cell_landings":
           progress = stats.safeCellLandings ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
-        case 'three_sixes':
+        case "three_sixes":
           progress = stats.threeSixesCount ?? 0;
           shouldUnlock = progress >= ach.requirement.value;
           break;
@@ -199,8 +207,16 @@ export class AchievementService {
       } else if (progress > 0) {
         // Update progress
         await this.prisma.userAchievement.upsert({
-          where: { userId_achievementId: { userId, achievementId: achievement.id } },
-          create: { userId, achievementId: achievement.id, unlockedAt: new Date(), progress, isCompleted: false },
+          where: {
+            userId_achievementId: { userId, achievementId: achievement.id },
+          },
+          create: {
+            userId,
+            achievementId: achievement.id,
+            unlockedAt: new Date(),
+            progress,
+            isCompleted: false,
+          },
           update: { progress },
         });
       }
@@ -220,25 +236,41 @@ export class AchievementService {
 
     const userAchievement = await this.prisma.userAchievement.upsert({
       where: { userId_achievementId: { userId, achievementId } },
-      create: { userId, achievementId, unlockedAt: new Date(), progress: requirement.value, isCompleted: true },
-      update: { unlockedAt: new Date(), progress: requirement.value, isCompleted: true },
+      create: {
+        userId,
+        achievementId,
+        unlockedAt: new Date(),
+        progress: requirement.value,
+        isCompleted: true,
+      },
+      update: {
+        unlockedAt: new Date(),
+        progress: requirement.value,
+        isCompleted: true,
+      },
     });
 
     // Grant reward
-    if (reward.type === 'demo_coins' && reward.value > 0) {
+    if (reward.type === "demo_coins" && reward.value > 0) {
       try {
         await this.prisma.wallet.update({
           where: { userId },
           data: { available: { increment: BigInt(reward.value) } },
         });
-        this.logger.log(`Granted ${reward.value} demo coins to user ${userId} for ${achievement.code}`);
+        this.logger.log(
+          `Granted ${reward.value} demo coins to user ${userId} for ${achievement.code}`,
+        );
       } catch (error) {
-        this.logger.warn(`Failed to grant demo coins to user ${userId}: ${error.message}`);
+        this.logger.warn(
+          `Failed to grant demo coins to user ${userId}: ${error.message}`,
+        );
       }
     }
 
     // Notification — the gateway handles the WebSocket emit
-    this.logger.log(`Achievement unlocked notification for user ${userId}: ${achievement.code}`);
+    this.logger.log(
+      `Achievement unlocked notification for user ${userId}: ${achievement.code}`,
+    );
 
     return userAchievement;
   }

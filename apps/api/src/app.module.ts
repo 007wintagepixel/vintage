@@ -2,25 +2,25 @@
 // App Module
 // ============================================
 
-import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
-import { ScheduleModule } from '@nestjs/schedule';
-import { BullModule } from '@nestjs/bullmq';
+import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
+import { ThrottlerModule } from "@nestjs/throttler";
+import { ScheduleModule } from "@nestjs/schedule";
+import { BullModule } from "@nestjs/bullmq";
 
-import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
-import { GameModule } from './game/game.module';
-import { MatchModule } from './match/match.module';
-import { RoomModule } from './room/room.module';
-import { TournamentModule } from './tournament/tournament.module';
-import { WalletModule } from './wallet/wallet.module';
-import { FriendModule } from './friend/friend.module';
-import { ChatModule } from './chat/chat.module';
-import { AdminModule } from './admin/admin.module';
-import { HealthModule } from './health/health.module';
-import { WebsocketModule } from './websocket/websocket.module';
+import { PrismaModule } from "./prisma/prisma.module";
+import { AuthModule } from "./auth/auth.module";
+import { UserModule } from "./user/user.module";
+import { GameModule } from "./game/game.module";
+import { MatchModule } from "./match/match.module";
+import { RoomModule } from "./room/room.module";
+import { TournamentModule } from "./tournament/tournament.module";
+import { WalletModule } from "./wallet/wallet.module";
+import { FriendModule } from "./friend/friend.module";
+import { ChatModule } from "./chat/chat.module";
+import { AdminModule } from "./admin/admin.module";
+import { HealthModule } from "./health/health.module";
+import { WebsocketModule } from "./websocket/websocket.module";
 
 // Build imports dynamically — BullMQ/Redis is optional
 const hasRedis = !!process.env.REDIS_URL || !!process.env.REDIS_HOST;
@@ -35,7 +35,7 @@ if (hasRedis) {
       BullModule.forRoot({
         connection: {
           host: redisUrl.hostname,
-          port: parseInt(redisUrl.port || '6379', 10),
+          port: parseInt(redisUrl.port || "6379", 10),
           password: redisUrl.password || undefined,
         },
       }),
@@ -44,8 +44,8 @@ if (hasRedis) {
     dynamicImports.push(
       BullModule.forRoot({
         connection: {
-          host: process.env.REDIS_HOST ?? 'localhost',
-          port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+          host: process.env.REDIS_HOST ?? "localhost",
+          port: parseInt(process.env.REDIS_PORT ?? "6379", 10),
           password: process.env.REDIS_PASSWORD,
         },
       }),
@@ -58,7 +58,7 @@ if (hasRedis) {
     // Configuration
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: [".env.local", ".env"],
       cache: true,
     }),
 

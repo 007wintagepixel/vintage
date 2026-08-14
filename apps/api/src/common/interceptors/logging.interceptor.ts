@@ -8,10 +8,10 @@ import {
   ExecutionContext,
   CallHandler,
   Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-import { Request, Response } from 'express';
+} from "@nestjs/common";
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
+import { Request, Response } from "express";
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -20,10 +20,11 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
-    
+
     const { method, url, ip, headers } = request;
-    const userAgent = headers['user-agent'] ?? '';
-    const requestId = (headers['x-request-id'] as string) ?? crypto.randomUUID();
+    const userAgent = headers["user-agent"] ?? "";
+    const requestId =
+      (headers["x-request-id"] as string) ?? crypto.randomUUID();
     const startTime = Date.now();
 
     // Log incoming request
@@ -37,7 +38,7 @@ export class LoggingInterceptor implements NestInterceptor {
         next: () => {
           const duration = Date.now() - startTime;
           const statusCode = response.statusCode;
-          
+
           this.logger.log(
             `← ${method} ${url} | ${statusCode} | ${duration}ms`,
             { requestId, method, url, statusCode, duration },
@@ -46,10 +47,17 @@ export class LoggingInterceptor implements NestInterceptor {
         error: (error) => {
           const duration = Date.now() - startTime;
           const statusCode = error.status ?? 500;
-          
+
           this.logger.error(
             `✗ ${method} ${url} | ${statusCode} | ${duration}ms | ${error.message}`,
-            { requestId, method, url, statusCode, duration, error: error.message },
+            {
+              requestId,
+              method,
+              url,
+              statusCode,
+              duration,
+              error: error.message,
+            },
           );
         },
       }),

@@ -2,14 +2,21 @@
 // Game Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { v4 as uuidv4 } from "uuid";
+import * as argon2 from "argon2";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { GameEngineService } from './game-engine.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { GameEngineService } from "./game-engine.service";
 
-import type { GameState, GameRules, PlayerColor, GameMode, MatchStatus } from '@ludo-nexus/shared-types';
+import type {
+  GameState,
+  GameRules,
+  PlayerColor,
+  GameMode,
+  MatchStatus,
+} from "@ludo-nexus/shared-types";
 
 @Injectable()
 export class GameService {
@@ -32,47 +39,84 @@ export class GameService {
       entryFee?: number;
       rules?: Partial<GameRules>;
       opponentCount?: number;
-      botDifficulty?: 'easy' | 'medium' | 'hard';
-    } = {}
+      botDifficulty?: "easy" | "medium" | "hard";
+    } = {},
   ) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: { wallet: true },
     });
 
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     // Check wallet balance for entry fee
     const entryFee = options.entryFee ?? 0;
     if (entryFee > 0 && user.wallet && user.wallet.available < entryFee) {
-      throw new Error('Insufficient balance');
+      throw new Error("Insufficient balance");
     }
 
     // Lock entry fee
     if (entryFee > 0) {
-      await this.lockFunds(userId, entryFee, 'match_entry');
+      await this.lockFunds(userId, entryFee, "match_entry");
     }
 
     // Create match players
-    const colors: PlayerColor[] = ['red', 'green', 'yellow', 'blue'];
+    const colors: PlayerColor[] = ["red", "green", "yellow", "blue"];
     const players: Array<{
       userId: string;
       color: PlayerColor;
       isBot: boolean;
-      botDifficulty?: 'easy' | 'medium' | 'hard';
-    }> = [
-      { userId, color: colors[0], isBot: false },
-    ];
+      botDifficulty?: "easy" | "medium" | "hard";
+    }> = [{ userId, color: colors[0], isBot: false }];
 
     // Add bots for vs_ai mode
-    if (mode === 'vs_ai') {
+    if (mode === "vs_ai") {
       const count = options.opponentCount ?? 1;
       for (let i = 1; i <= count; i++) {
+        const botId = uuidv4();
+
+        // Create bot user and wallet in a transaction
+        await this.prisma.$transaction(async (tx) => {
+          // Create bot user
+          await tx.user.create({
+            data: {
+              id: botId,
+              username: `bot-${uuidv4().substring(0, 8)}`,
+              email: `bot-${botId}@ludonexus.com`,
+              passwordHash: await argon2.hash(`bot-${uuidv4()}`),
+              fullName: `Bot ${colors[i]}`,
+              country: "US",
+              mobileNumber: `+1555000${i.toString().padStart(4, "0")}`,
+              isVerified: true,
+              isEmailVerified: true,
+              isPhoneVerified: true,
+              kycStatus: "verified",
+              level: 1,
+              experience: 0,
+              totalMatches: 0,
+              wins: 0,
+              losses: 0,
+              referralCode: uuidv4().substring(0, 8).toUpperCase(),
+            },
+          });
+
+          // Create wallet for bot
+          await tx.wallet.create({
+            data: {
+              userId: botId,
+              available: 0,
+              bonus: 0,
+              locked: 0,
+              pending: 0,
+            },
+          });
+        });
+
         players.push({
-          userId: `bot-${uuidv4()}`,
+          userId: botId,
           color: colors[i],
           isBot: true,
-          botDifficulty: options.botDifficulty ?? 'medium',
+          botDifficulty: options.botDifficulty ?? "medium",
         });
       }
     }
@@ -84,9 +128,9 @@ export class GameService {
         entryFee,
         prizePool: entryFee * players.length,
         platformFee: Math.floor(entryFee * players.length * 0.1),
-        status: 'waiting',
+        status: "waiting",
         players: {
-          create: players.map(p => ({
+          create: players.map((p) => ({
             userId: p.userId,
             color: p.color,
             isBot: p.isBot,
@@ -114,7 +158,7 @@ export class GameService {
     await this.prisma.match.update({
       where: { id: match.id },
       data: {
-        status: 'in_progress',
+        status: "in_progress",
         gameState: gameState as any,
         startedAt: new Date(),
       },
@@ -129,11 +173,11 @@ export class GameService {
       include: { players: true },
     });
 
-    if (!match) throw new Error('Match not found');
+    if (!match) throw new Error("Match not found");
 
     // Check if user is part of match
     const isParticipant = match.players.some((p: any) => p.userId === userId);
-    if (!isParticipant) throw new Error('Not a participant');
+    if (!isParticipant) throw new Error("Not a participant");
 
     return match;
   }
@@ -143,7 +187,7 @@ export class GameService {
       where: { id: matchId },
     });
 
-    if (!match) throw new Error('Match not found');
+    if (!match) throw new Error("Match not found");
 
     return match.gameState as GameState;
   }
@@ -159,18 +203,18 @@ export class GameService {
     // Validate it's user's turn
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (currentPlayer.userId !== userId) {
-      throw new Error('Not your turn');
+      throw new Error("Not your turn");
     }
 
     if (currentPlayer.hasRolled) {
-      throw new Error('Already rolled');
+      throw new Error("Already rolled");
     }
 
     // Check idempotency
     const existing = await this.prisma.ledgerEntry.findUnique({
       where: { idempotencyKey },
     });
-    if (existing) throw new Error('Duplicate request');
+    if (existing) throw new Error("Duplicate request");
 
     // Roll dice (server-authoritative)
     const diceRoll = this.gameEngine.rollDice();
@@ -179,13 +223,25 @@ export class GameService {
     // Calculate legal moves
     const legalMoves = this.gameEngine.getLegalMoves({
       ...gameState,
-      diceRoll: { value: diceRoll, rolledAt: new Date().toISOString(), rolledBy: userId, isServerGenerated: true, auditId: uuidv4() },
+      diceRoll: {
+        value: diceRoll,
+        rolledAt: new Date().toISOString(),
+        rolledBy: userId,
+        isServerGenerated: true,
+        auditId: uuidv4(),
+      },
     });
 
     // Update game state
     const newGameState = {
       ...gameState,
-      diceRoll: { value: diceRoll, rolledAt: new Date().toISOString(), rolledBy: userId, isServerGenerated: true, auditId: uuidv4() },
+      diceRoll: {
+        value: diceRoll,
+        rolledAt: new Date().toISOString(),
+        rolledBy: userId,
+        isServerGenerated: true,
+        auditId: uuidv4(),
+      },
       legalMoves,
       stateVersion: gameState.stateVersion + 1,
     };
@@ -209,7 +265,7 @@ export class GameService {
     tokenId: number,
     toPosition: number,
     gameStateVersion: number,
-    idempotencyKey: string
+    idempotencyKey: string,
   ) {
     const match = await this.getMatch(matchId, userId);
     const gameState = match.gameState as GameState;
@@ -217,19 +273,19 @@ export class GameService {
     // Validate turn
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
     if (currentPlayer.userId !== userId) {
-      throw new Error('Not your turn');
+      throw new Error("Not your turn");
     }
 
     // Validate version
     if (gameState.stateVersion !== gameStateVersion) {
-      throw new Error('Game state version mismatch');
+      throw new Error("Game state version mismatch");
     }
 
     // Check idempotency
     const existing = await this.prisma.ledgerEntry.findUnique({
       where: { idempotencyKey },
     });
-    if (existing) throw new Error('Duplicate request');
+    if (existing) throw new Error("Duplicate request");
 
     // Validate and execute move
     const validation = this.gameEngine.validateMove(
@@ -237,26 +293,27 @@ export class GameService {
       userId,
       tokenId,
       toPosition,
-      gameStateVersion
+      gameStateVersion,
     );
 
     if (!validation.valid) {
       throw new Error(validation.error);
     }
 
-    const { gameState: newGameState, move, capturedTokens } = this.gameEngine.moveToken(
-      gameState,
-      tokenId,
-      toPosition
-    );
+    const {
+      gameState: newGameState,
+      move,
+      capturedTokens,
+    } = this.gameEngine.moveToken(gameState, tokenId, toPosition);
 
     // Apply captures
-    const finalGameState = capturedTokens.length > 0
-      ? this.gameEngine.applyCaptures(newGameState, capturedTokens)
-      : newGameState;
+    const finalGameState =
+      capturedTokens.length > 0
+        ? this.gameEngine.applyCaptures(newGameState, capturedTokens)
+        : newGameState;
 
     // Check for match completion
-    if (finalGameState.status === 'completed') {
+    if (finalGameState.status === "completed") {
       await this.completeMatch(matchId, finalGameState);
     }
 
@@ -271,7 +328,7 @@ export class GameService {
       data: {
         matchId,
         sequence: finalGameState.moveHistory.length,
-        type: 'move',
+        type: "move",
         playerId: userId,
         data: move as any,
       },
@@ -279,7 +336,9 @@ export class GameService {
 
     // Emit event — the gateway handles broadcasting to the match room
     // The GameGateway calls moveToken() then emits 'token_moved' to the match room
-    this.logger.debug(`Token moved in match ${matchId}: token ${tokenId} to position ${toPosition}`);
+    this.logger.debug(
+      `Token moved in match ${matchId}: token ${tokenId} to position ${toPosition}`,
+    );
 
     return { gameState: finalGameState, move, capturedTokens };
   }
@@ -309,7 +368,7 @@ export class GameService {
     await this.prisma.match.update({
       where: { id: matchId },
       data: {
-        status: 'completed',
+        status: "completed",
         winnerId,
         completedAt: new Date(),
       },
@@ -327,10 +386,10 @@ export class GameService {
 
       if (rank === 1) {
         coinsWon = winnerReward;
-        await this.releaseFunds(playerId, winnerReward, 'match_win', matchId);
+        await this.releaseFunds(playerId, winnerReward, "match_win", matchId);
       } else {
         coinsLost = entryFee;
-        await this.releaseFunds(playerId, 0, 'match_loss', matchId);
+        await this.releaseFunds(playerId, 0, "match_loss", matchId);
       }
 
       await this.prisma.matchPlayer.update({
@@ -352,7 +411,7 @@ export class GameService {
     // Track platform revenue in a ledger entry
     try {
       const platformWallet = await this.prisma.wallet.findFirst({
-        where: { userId: 'platform' },
+        where: { userId: "platform" },
       });
       if (platformWallet) {
         await this.prisma.wallet.update({
@@ -362,12 +421,12 @@ export class GameService {
       }
       await this.prisma.ledgerEntry.create({
         data: {
-          walletId: platformWallet?.id ?? 'platform',
-          userId: 'platform',
-          type: 'credit',
+          walletId: platformWallet?.id ?? "platform",
+          userId: "platform",
+          type: "credit",
           amount: BigInt(platformFee),
-          balanceType: 'available',
-          referenceType: 'platform_fee',
+          balanceType: "available",
+          referenceType: "platform_fee",
           referenceId: matchId,
           description: `Platform fee from match ${matchId}`,
           runningBalance: BigInt(platformFee),
@@ -375,7 +434,9 @@ export class GameService {
         },
       });
     } catch (err) {
-      this.logger.warn(`Failed to track platform revenue for match ${matchId}: ${err.message}`);
+      this.logger.warn(
+        `Failed to track platform revenue for match ${matchId}: ${err.message}`,
+      );
     }
   }
 
@@ -383,11 +444,16 @@ export class GameService {
   // WALLET HELPERS
   // ============================================
 
-  private async lockFunds(userId: string, amount: number, referenceType: string, referenceId?: string) {
+  private async lockFunds(
+    userId: string,
+    amount: number,
+    referenceType: string,
+    referenceId?: string,
+  ) {
     await this.prisma.$transaction(async (tx: any) => {
       const wallet = await tx.wallet.findUnique({ where: { userId } });
       if (!wallet || wallet.available < amount) {
-        throw new Error('Insufficient funds');
+        throw new Error("Insufficient funds");
       }
 
       const newAvailable = wallet.available - BigInt(amount);
@@ -402,9 +468,9 @@ export class GameService {
         data: {
           walletId: wallet.id,
           userId,
-          type: 'debit',
+          type: "debit",
           amount: -BigInt(amount),
-          balanceType: 'available',
+          balanceType: "available",
           referenceType: referenceType as any,
           referenceId: referenceId ?? null,
           description: `Locked for ${referenceType}`,
@@ -417,9 +483,9 @@ export class GameService {
         data: {
           walletId: wallet.id,
           userId,
-          type: 'credit',
+          type: "credit",
           amount: BigInt(amount),
-          balanceType: 'locked',
+          balanceType: "locked",
           referenceType: referenceType as any,
           referenceId: referenceId ?? null,
           description: `Locked for ${referenceType}`,
@@ -430,10 +496,15 @@ export class GameService {
     });
   }
 
-  private async releaseFunds(userId: string, amount: number, referenceType: string, referenceId?: string) {
+  private async releaseFunds(
+    userId: string,
+    amount: number,
+    referenceType: string,
+    referenceId?: string,
+  ) {
     await this.prisma.$transaction(async (tx: any) => {
       const wallet = await tx.wallet.findUnique({ where: { userId } });
-      if (!wallet) throw new Error('Wallet not found');
+      if (!wallet) throw new Error("Wallet not found");
 
       const newLocked = wallet.locked - BigInt(amount);
       const newAvailable = wallet.available + BigInt(amount);
@@ -448,9 +519,9 @@ export class GameService {
           data: {
             walletId: wallet.id,
             userId,
-            type: 'credit',
+            type: "credit",
             amount: BigInt(amount),
-            balanceType: 'available',
+            balanceType: "available",
             referenceType: referenceType as any,
             referenceId: referenceId ?? null,
             description: `Released from ${referenceType}`,
@@ -464,9 +535,9 @@ export class GameService {
         data: {
           walletId: wallet.id,
           userId,
-          type: 'debit',
+          type: "debit",
           amount: -BigInt(amount),
-          balanceType: 'locked',
+          balanceType: "locked",
           referenceType: referenceType as any,
           referenceId: referenceId ?? null,
           description: `Released from ${referenceType}`,

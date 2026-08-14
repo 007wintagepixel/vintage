@@ -2,8 +2,8 @@
 // Password Service
 // ============================================
 
-import { Injectable } from '@nestjs/common';
-import * as argon2 from 'argon2';
+import { Injectable } from "@nestjs/common";
+import * as argon2 from "argon2";
 
 @Injectable()
 export class PasswordService {
@@ -38,22 +38,24 @@ export class PasswordService {
     const errors: string[] = [];
 
     if (password.length < 8) {
-      errors.push('Password must be at least 8 characters');
+      errors.push("Password must be at least 8 characters");
     }
     if (password.length > 128) {
-      errors.push('Password must not exceed 128 characters');
+      errors.push("Password must not exceed 128 characters");
     }
     if (!/[a-z]/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter');
+      errors.push("Password must contain at least one lowercase letter");
     }
     if (!/[A-Z]/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter');
+      errors.push("Password must contain at least one uppercase letter");
     }
     if (!/\d/.test(password)) {
-      errors.push('Password must contain at least one number');
+      errors.push("Password must contain at least one number");
     }
     if (!/[@$!%*?&]/.test(password)) {
-      errors.push('Password must contain at least one special character (@$!%*?&)');
+      errors.push(
+        "Password must contain at least one special character (@$!%*?&)",
+      );
     }
 
     return { valid: errors.length === 0, errors };

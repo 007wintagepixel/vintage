@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   DoorOpen,
   ArrowLeft,
@@ -17,64 +17,64 @@ import {
   History,
   AlertCircle,
   KeyRound,
-} from 'lucide-react';
+} from "lucide-react";
 
 const recentRooms = [
   {
-    code: 'XK7M2P',
-    name: 'Friday Night Ludo',
-    host: 'PlayerTwo',
+    code: "XK7M2P",
+    name: "Friday Night Ludo",
+    host: "PlayerTwo",
     players: 3,
     maxPlayers: 4,
-    mode: 'classic',
+    mode: "classic",
     entryFee: 100,
-    privacy: 'private' as const,
-    playedAt: '2 hours ago',
+    privacy: "private" as const,
+    playedAt: "2 hours ago",
   },
   {
-    code: 'Q9RT4B',
-    name: 'Quick Duel',
-    host: 'PlayerThree',
+    code: "Q9RT4B",
+    name: "Quick Duel",
+    host: "PlayerThree",
     players: 2,
     maxPlayers: 2,
-    mode: 'quick',
+    mode: "quick",
     entryFee: 250,
-    privacy: 'private' as const,
-    playedAt: 'Yesterday',
+    privacy: "private" as const,
+    playedAt: "Yesterday",
   },
   {
-    code: 'LM3Z8N',
-    name: 'Championship Round',
-    host: 'PlayerFour',
+    code: "LM3Z8N",
+    name: "Championship Round",
+    host: "PlayerFour",
     players: 4,
     maxPlayers: 4,
-    mode: 'classic',
+    mode: "classic",
     entryFee: 500,
-    privacy: 'private' as const,
-    playedAt: '3 days ago',
+    privacy: "private" as const,
+    playedAt: "3 days ago",
   },
 ];
 
 export default function JoinRoomPage() {
   const router = useRouter();
-  const [roomCode, setRoomCode] = useState('');
-  const [error, setError] = useState('');
+  const [roomCode, setRoomCode] = useState("");
+  const [error, setError] = useState("");
 
   const handleJoin = () => {
     const code = roomCode.trim().toUpperCase();
     if (!code) {
-      setError('Please enter a room code');
+      setError("Please enter a room code");
       return;
     }
     if (code.length < 4 || code.length > 8) {
-      setError('Room code must be 4-8 characters');
+      setError("Room code must be 4-8 characters");
       return;
     }
     if (!/^[A-Z0-9]+$/.test(code)) {
-      setError('Room code can only contain letters and numbers');
+      setError("Room code can only contain letters and numbers");
       return;
     }
-    setError('');
+    setError("");
     router.push(`/room/${code}`);
   };
 
@@ -96,8 +96,12 @@ export default function JoinRoomPage() {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
       >
         <div>
-          <h1 className="font-display text-display-md gradient-text">Join Room</h1>
-          <p className="text-text-secondary mt-1">Enter a room code to join a private match</p>
+          <h1 className="font-display text-display-md gradient-text">
+            Join Room
+          </h1>
+          <p className="text-text-secondary mt-1">
+            Enter a room code to join a private match
+          </p>
         </div>
         <Link href="/game-modes" className="btn-ghost gap-2">
           <ArrowLeft className="w-4 h-4" />
@@ -119,7 +123,9 @@ export default function JoinRoomPage() {
             </div>
             <div>
               <h2 className="font-display text-heading-md">Enter Room Code</h2>
-              <p className="text-body-sm text-text-muted">Ask the host for the 6-digit code</p>
+              <p className="text-body-sm text-text-muted">
+                Ask the host for the 6-digit code
+              </p>
             </div>
           </div>
 
@@ -132,11 +138,11 @@ export default function JoinRoomPage() {
               value={roomCode}
               onChange={(e) => {
                 setRoomCode(e.target.value.toUpperCase().slice(0, 8));
-                setError('');
+                setError("");
               }}
-              onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+              onKeyDown={(e) => e.key === "Enter" && handleJoin()}
               className={`input pl-12 text-heading-md font-display tracking-widest uppercase ${
-                error ? 'input-error' : ''
+                error ? "input-error" : ""
               }`}
             />
           </div>
@@ -145,7 +151,7 @@ export default function JoinRoomPage() {
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="flex items-center gap-2 mt-3 text-body-sm text-accent-red"
               >
@@ -156,7 +162,10 @@ export default function JoinRoomPage() {
           </AnimatePresence>
 
           <div className="flex gap-3 mt-4">
-            <button onClick={handlePaste} className="btn-ghost gap-2 text-body-sm">
+            <button
+              onClick={handlePaste}
+              className="btn-ghost gap-2 text-body-sm"
+            >
               Paste Code
             </button>
             <button onClick={handleJoin} className="btn-primary flex-1 gap-2">
@@ -168,7 +177,8 @@ export default function JoinRoomPage() {
           <div className="mt-6 p-4 glass-card rounded-xl">
             <p className="text-body-sm text-text-secondary">
               <Lock className="w-4 h-4 inline-block mr-2 text-accent-magenta" />
-              Private rooms require a valid code from the host. Public rooms can be found via matchmaking.
+              Private rooms require a valid code from the host. Public rooms can
+              be found via matchmaking.
             </p>
           </div>
         </motion.div>
@@ -221,10 +231,10 @@ export default function JoinRoomPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Coins className="w-3.5 h-3.5" />
-                      {room.entryFee === 0 ? 'Free' : `${room.entryFee}`}
+                      {room.entryFee === 0 ? "Free" : `${room.entryFee}`}
                     </span>
                     <span className="flex items-center gap-1">
-                      {room.privacy === 'private' ? (
+                      {room.privacy === "private" ? (
                         <Lock className="w-3.5 h-3.5 text-accent-magenta" />
                       ) : (
                         <Globe className="w-3.5 h-3.5 text-accent-green" />

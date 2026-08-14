@@ -2,12 +2,12 @@
 // Session Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import { v4 as uuidv4 } from "uuid";
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class SessionService {
@@ -28,17 +28,21 @@ export class SessionService {
   ): Promise<{ accessToken: string; refreshToken: string; sessionId: string }> {
     const sessionId = uuidv4();
     const refreshToken = uuidv4();
-    
+
     // Calculate expiry times
-    const accessExpiresIn = this.configService.get<string>('JWT_ACCESS_EXPIRES_IN') ?? '15m';
-    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '30d';
-    
+    const accessExpiresIn =
+      this.configService.get<string>("JWT_ACCESS_EXPIRES_IN") ?? "15m";
+    const refreshExpiresIn =
+      this.configService.get<string>("JWT_REFRESH_EXPIRES_IN") ?? "30d";
+
     const accessToken = this.jwtService.sign(
       { sub: userId, sid: sessionId },
       { expiresIn: accessExpiresIn },
     );
 
-    const refreshTokenExpiresAt = new Date(Date.now() + this.parseExpiry(refreshExpiresIn));
+    const refreshTokenExpiresAt = new Date(
+      Date.now() + this.parseExpiry(refreshExpiresIn),
+    );
 
     // Store session
     await this.prisma.session.create({
@@ -83,7 +87,7 @@ export class SessionService {
 
   async validateRefreshToken(refreshToken: string) {
     const hashedToken = await this.hashToken(refreshToken);
-    
+
     const session = await this.prisma.session.findUnique({
       where: { refreshToken: hashedToken },
     });
@@ -94,23 +98,31 @@ export class SessionService {
     return session;
   }
 
-  async rotateSession(sessionId: string): Promise<{ accessToken: string; refreshToken: string }> {
+  async rotateSession(
+    sessionId: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     const session = await this.prisma.session.findUnique({
       where: { id: sessionId },
     });
 
     if (!session) {
-      throw new Error('Session not found');
+      throw new Error("Session not found");
     }
 
     const newRefreshToken = uuidv4();
     const newRefreshTokenExpiresAt = new Date(
-      Date.now() + this.parseExpiry(this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '30d')
+      Date.now() +
+        this.parseExpiry(
+          this.configService.get<string>("JWT_REFRESH_EXPIRES_IN") ?? "30d",
+        ),
     );
 
     const accessToken = this.jwtService.sign(
       { sub: session.userId, sid: sessionId },
-      { expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN') ?? '15m' },
+      {
+        expiresIn:
+          this.configService.get<string>("JWT_ACCESS_EXPIRES_IN") ?? "15m",
+      },
     );
 
     await this.prisma.session.update({
@@ -140,7 +152,7 @@ export class SessionService {
   async getUserSessions(userId: string) {
     return this.prisma.session.findMany({
       where: { userId },
-      orderBy: { lastActiveAt: 'desc' },
+      orderBy: { lastActiveAt: "desc" },
       select: {
         id: true,
         deviceId: true,
@@ -157,8 +169,8 @@ export class SessionService {
 
   private async hashToken(token: string): Promise<string> {
     // In production, use argon2 or bcrypt
-    const crypto = await import('crypto');
-    return crypto.createHash('sha256').update(token).digest('hex');
+    const crypto = await import("crypto");
+    return crypto.createHash("sha256").update(token).digest("hex");
   }
 
   private parseExpiry(expiry: string): number {
@@ -169,11 +181,16 @@ export class SessionService {
     const unit = match[2];
 
     switch (unit) {
-      case 's': return value * 1000;
-      case 'm': return value * 60 * 1000;
-      case 'h': return value * 60 * 60 * 1000;
-      case 'd': return value * 24 * 60 * 60 * 1000;
-      default: return 30 * 24 * 60 * 60 * 1000;
+      case "s":
+        return value * 1000;
+      case "m":
+        return value * 60 * 1000;
+      case "h":
+        return value * 60 * 60 * 1000;
+      case "d":
+        return value * 24 * 60 * 60 * 1000;
+      default:
+        return 30 * 24 * 60 * 60 * 1000;
     }
   }
 }

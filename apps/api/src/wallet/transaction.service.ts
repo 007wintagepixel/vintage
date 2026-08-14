@@ -2,10 +2,15 @@
 // Transaction Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
-import { Prisma, TransactionType, BalanceType, PaymentMethod } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  Prisma,
+  TransactionType,
+  BalanceType,
+  PaymentMethod,
+} from "@prisma/client";
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class TransactionService {
@@ -13,7 +18,12 @@ export class TransactionService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async getTransactions(userId: string, filters: any = {}, page = 1, limit = 20) {
+  async getTransactions(
+    userId: string,
+    filters: any = {},
+    page = 1,
+    limit = 20,
+  ) {
     const where: any = { userId };
 
     if (filters.type) where.type = filters.type;
@@ -32,7 +42,7 @@ export class TransactionService {
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -80,7 +90,11 @@ export class TransactionService {
     });
   }
 
-  async updateTransactionStatus(transactionId: string, status: string, processedAt?: Date) {
+  async updateTransactionStatus(
+    transactionId: string,
+    status: string,
+    processedAt?: Date,
+  ) {
     return this.prisma.transaction.update({
       where: { id: transactionId },
       data: {

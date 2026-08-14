@@ -2,12 +2,12 @@
 // Matchmaking Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { GameService } from '../game/game.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { GameService } from "../game/game.service";
 
 interface QueuedPlayer {
   userId: string;
@@ -37,11 +37,11 @@ export class MatchmakingService {
   async joinQueue(
     userId: string,
     mode: string,
-    options: { skillRating?: number; region?: string } = {}
+    options: { skillRating?: number; region?: string } = {},
   ) {
     // Check if already in queue
     if (this.playerQueueMap.has(userId)) {
-      throw new Error('Already in queue');
+      throw new Error("Already in queue");
     }
 
     // Get user skill rating
@@ -49,10 +49,10 @@ export class MatchmakingService {
       where: { id: userId },
       select: { id: true },
     });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error("User not found");
 
     const skillRating = options.skillRating ?? 1000; // Default ELO
-    const region = options.region ?? 'global';
+    const region = options.region ?? "global";
 
     const player: QueuedPlayer = {
       userId,
@@ -74,16 +74,19 @@ export class MatchmakingService {
     // Try to match immediately
     await this.tryMatch(mode);
 
-    return { success: true, queuePosition: this.getQueuePosition(mode, userId) };
+    return {
+      success: true,
+      queuePosition: this.getQueuePosition(mode, userId),
+    };
   }
 
   async leaveQueue(userId: string) {
     const mode = this.playerQueueMap.get(userId);
-    if (!mode) return { success: false, message: 'Not in queue' };
+    if (!mode) return { success: false, message: "Not in queue" };
 
     const queue = this.queues.get(mode);
     if (queue) {
-      const index = queue.findIndex(p => p.userId === userId);
+      const index = queue.findIndex((p) => p.userId === userId);
       if (index !== -1) {
         queue.splice(index, 1);
       }
@@ -99,8 +102,8 @@ export class MatchmakingService {
     if (!mode) return { inQueue: false };
 
     const queue = this.queues.get(mode) ?? [];
-    const position = queue.findIndex(p => p.userId === userId) + 1;
-    
+    const position = queue.findIndex((p) => p.userId === userId) + 1;
+
     return {
       inQueue: true,
       mode,
@@ -122,13 +125,15 @@ export class MatchmakingService {
     queue.sort((a, b) => a.skillRating - b.skillRating);
 
     // Try to form groups of 4 (or 2 for 1v1)
-    const playersPerMatch = mode === 'vs_human' ? 4 : 2;
-    
+    const playersPerMatch = mode === "vs_human" ? 4 : 2;
+
     while (queue.length >= playersPerMatch) {
       // Take first N players with similar skill
       const candidates = queue.slice(0, playersPerMatch);
-      const skillSpread = candidates[candidates.length - 1].skillRating - candidates[0].skillRating;
-      
+      const skillSpread =
+        candidates[candidates.length - 1].skillRating -
+        candidates[0].skillRating;
+
       // Allow max 500 skill difference
       if (skillSpread > 500 && queue.length > playersPerMatch) {
         // Not good match, wait for more players
@@ -136,7 +141,7 @@ export class MatchmakingService {
       }
 
       // Remove from queue
-      candidates.forEach(p => {
+      candidates.forEach((p) => {
         this.playerQueueMap.delete(p.userId);
       });
       queue.splice(0, candidates.length);
@@ -147,7 +152,7 @@ export class MatchmakingService {
       } catch (error) {
         this.logger.error(`Failed to create match: ${error.message}`);
         // Re-queue players
-        candidates.forEach(p => {
+        candidates.forEach((p) => {
           queue.unshift(p);
           this.playerQueueMap.set(p.userId, mode);
         });
@@ -157,15 +162,15 @@ export class MatchmakingService {
   }
 
   private async createMatchFromQueue(players: QueuedPlayer[], mode: string) {
-    const userIds = players.map(p => p.userId);
-    
+    const userIds = players.map((p) => p.userId);
+
     // Check all users still exist and are available
     const users = await this.prisma.user.findMany({
       where: { id: { in: userIds } },
     });
 
     if (users.length !== userIds.length) {
-      throw new Error('Some users no longer exist');
+      throw new Error("Some users no longer exist");
     }
 
     // Create match via GameService
@@ -173,13 +178,17 @@ export class MatchmakingService {
       entryFee: 0, // Free matchmaking for now
     });
 
-    this.logger.log(`Created match ${result.matchId} for ${userIds.join(', ')}`);
+    this.logger.log(
+      `Created match ${result.matchId} for ${userIds.join(", ")}`,
+    );
 
     // Notify players — no Notification model in schema yet, so log for now.
     // The frontend polls for match status; the GameGateway will emit the
     // 'match_found' event to each player's socket when they join the match room.
     for (const id of userIds) {
-      this.logger.log(`match_found notification for user ${id}: match ${result.matchId}`);
+      this.logger.log(
+        `match_found notification for user ${id}: match ${result.matchId}`,
+      );
     }
 
     return result;
@@ -191,7 +200,7 @@ export class MatchmakingService {
 
   private getQueuePosition(mode: string, userId: string): number {
     const queue = this.queues.get(mode) ?? [];
-    return queue.findIndex(p => p.userId === userId) + 1;
+    return queue.findIndex((p) => p.userId === userId) + 1;
   }
 
   private estimateWaitTime(mode: string, position: number): number {
@@ -217,16 +226,18 @@ export class MatchmakingService {
 
     for (const [mode, queue] of this.queues.entries()) {
       const initialLength = queue.length;
-      const filtered = queue.filter(p => now - p.joinedAt < maxWait);
-      
+      const filtered = queue.filter((p) => now - p.joinedAt < maxWait);
+
       // Remove stale entries
-      const removed = queue.filter(p => now - p.joinedAt >= maxWait);
-      removed.forEach(p => this.playerQueueMap.delete(p.userId));
-      
+      const removed = queue.filter((p) => now - p.joinedAt >= maxWait);
+      removed.forEach((p) => this.playerQueueMap.delete(p.userId));
+
       this.queues.set(mode, filtered);
-      
+
       if (filtered.length !== initialLength) {
-        this.logger.log(`Cleaned ${initialLength - filtered.length} stale entries from ${mode} queue`);
+        this.logger.log(
+          `Cleaned ${initialLength - filtered.length} stale entries from ${mode} queue`,
+        );
       }
     }
   }

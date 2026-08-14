@@ -2,13 +2,22 @@
 // Tournament Service
 // ============================================
 
-import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { GameService } from '../game/game.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { GameService } from "../game/game.service";
 
-import type { CreateTournament, TournamentAction } from '@ludo-nexus/validation';
+import type {
+  CreateTournament,
+  TournamentAction,
+} from "@ludo-nexus/validation";
 
 @Injectable()
 export class TournamentService {
@@ -26,12 +35,15 @@ export class TournamentService {
   async createTournament(userId: string, data: CreateTournament) {
     // Validate user is admin or has permission
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new NotFoundException("User not found");
 
     // Validate prize breakdown sums to 100%
-    const totalPercentage = data.prizeBreakdown.reduce((sum, p) => sum + p.percentage, 0);
+    const totalPercentage = data.prizeBreakdown.reduce(
+      (sum, p) => sum + p.percentage,
+      0,
+    );
     if (totalPercentage !== 100) {
-      throw new BadRequestException('Prize breakdown must sum to 100%');
+      throw new BadRequestException("Prize breakdown must sum to 100%");
     }
 
     const tournament = await this.prisma.tournament.create({
@@ -43,10 +55,12 @@ export class TournamentService {
         entryFee: data.entryFee,
         prizeBreakdown: data.prizeBreakdown as any,
         rules: data.rules as any,
-        status: 'draft',
+        status: "draft",
         registrationOpensAt: new Date(data.registrationOpensAt),
         registrationClosesAt: new Date(data.registrationClosesAt),
-        checkInStartsAt: data.checkInStartsAt ? new Date(data.checkInStartsAt) : null,
+        checkInStartsAt: data.checkInStartsAt
+          ? new Date(data.checkInStartsAt)
+          : null,
         checkInEndsAt: data.checkInEndsAt ? new Date(data.checkInEndsAt) : null,
         createdById: userId,
       },
@@ -61,19 +75,35 @@ export class TournamentService {
       include: {
         createdBy: { select: { id: true, username: true, avatarUrl: true } },
         registrations: {
-          include: { user: { select: { id: true, username: true, avatarUrl: true, level: true } } },
-          orderBy: { registeredAt: 'asc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                avatarUrl: true,
+                level: true,
+              },
+            },
+          },
+          orderBy: { registeredAt: "asc" },
         },
         matches: {
           include: {
-            players: { select: { userId: true, color: true, isBot: true, finalRank: true } },
+            players: {
+              select: {
+                userId: true,
+                color: true,
+                isBot: true,
+                finalRank: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'asc' },
+          orderBy: { createdAt: "asc" },
         },
       },
     });
 
-    if (!tournament) throw new NotFoundException('Tournament not found');
+    if (!tournament) throw new NotFoundException("Tournament not found");
     return tournament;
   }
 
@@ -88,33 +118,48 @@ export class TournamentService {
           createdBy: { select: { id: true, username: true } },
           _count: { select: { registrations: true, matches: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.tournament.count({ where }),
     ]);
 
-    return { data: tournaments, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: tournaments,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
-  async updateTournament(userId: string, tournamentId: string, data: Partial<CreateTournament>) {
+  async updateTournament(
+    userId: string,
+    tournamentId: string,
+    data: Partial<CreateTournament>,
+  ) {
     const tournament = await this.getTournament(tournamentId);
     if (tournament.createdById !== userId) {
-      throw new ForbiddenException('Not the tournament creator');
+      throw new ForbiddenException("Not the tournament creator");
     }
-    if (tournament.status !== 'draft') {
-      throw new BadRequestException('Can only update draft tournaments');
+    if (tournament.status !== "draft") {
+      throw new BadRequestException("Can only update draft tournaments");
     }
 
     return this.prisma.tournament.update({
       where: { id: tournamentId },
       data: {
         ...data,
-        registrationOpensAt: data.registrationOpensAt ? new Date(data.registrationOpensAt) : undefined,
-        registrationClosesAt: data.registrationClosesAt ? new Date(data.registrationClosesAt) : undefined,
-        checkInStartsAt: data.checkInStartsAt ? new Date(data.checkInStartsAt) : undefined,
-        checkInEndsAt: data.checkInEndsAt ? new Date(data.checkInEndsAt) : undefined,
+        registrationOpensAt: data.registrationOpensAt
+          ? new Date(data.registrationOpensAt)
+          : undefined,
+        registrationClosesAt: data.registrationClosesAt
+          ? new Date(data.registrationClosesAt)
+          : undefined,
+        checkInStartsAt: data.checkInStartsAt
+          ? new Date(data.checkInStartsAt)
+          : undefined,
+        checkInEndsAt: data.checkInEndsAt
+          ? new Date(data.checkInEndsAt)
+          : undefined,
         rules: data.rules as any,
         prizeBreakdown: data.prizeBreakdown as any,
       },
@@ -124,10 +169,12 @@ export class TournamentService {
   async deleteTournament(userId: string, tournamentId: string) {
     const tournament = await this.getTournament(tournamentId);
     if (tournament.createdById !== userId) {
-      throw new ForbiddenException('Not the tournament creator');
+      throw new ForbiddenException("Not the tournament creator");
     }
-    if (tournament.status !== 'draft' && tournament.status !== 'cancelled') {
-      throw new BadRequestException('Can only delete draft or cancelled tournaments');
+    if (tournament.status !== "draft" && tournament.status !== "cancelled") {
+      throw new BadRequestException(
+        "Can only delete draft or cancelled tournaments",
+      );
     }
 
     await this.prisma.tournament.delete({ where: { id: tournamentId } });
@@ -142,44 +189,51 @@ export class TournamentService {
     const tournament = await this.getTournament(data.tournamentId);
 
     switch (data.action) {
-      case 'register':
+      case "register":
         return this.register(userId, tournament);
-      case 'unregister':
+      case "unregister":
         return this.unregister(userId, tournament);
-      case 'check_in':
+      case "check_in":
         return this.checkIn(userId, tournament);
-      case 'publish':
+      case "publish":
         return this.publish(tournament, userId);
-      case 'cancel':
+      case "cancel":
         return this.cancel(tournament, userId);
       default:
-        throw new BadRequestException('Invalid action');
+        throw new BadRequestException("Invalid action");
     }
   }
 
   private async register(userId: string, tournament: any) {
     // Check status
-    if (tournament.status !== 'registration_open' && tournament.status !== 'published') {
-      throw new BadRequestException('Registration not open');
+    if (
+      tournament.status !== "registration_open" &&
+      tournament.status !== "published"
+    ) {
+      throw new BadRequestException("Registration not open");
     }
 
     // Check if already registered
     const existing = await this.prisma.tournamentRegistration.findUnique({
       where: { tournamentId_userId: { tournamentId: tournament.id, userId } },
     });
-    if (existing) throw new BadRequestException('Already registered');
+    if (existing) throw new BadRequestException("Already registered");
 
     // Check capacity
     const count = await this.prisma.tournamentRegistration.count({
       where: { tournamentId: tournament.id },
     });
     if (count >= tournament.maxParticipants) {
-      throw new BadRequestException('Tournament is full');
+      throw new BadRequestException("Tournament is full");
     }
 
     // Check entry fee
     if (tournament.entryFee > 0) {
-      await this.lockTournamentFunds(userId, tournament.entryFee, tournament.id);
+      await this.lockTournamentFunds(
+        userId,
+        tournament.entryFee,
+        tournament.id,
+      );
     }
 
     const registration = await this.prisma.tournamentRegistration.create({
@@ -194,17 +248,20 @@ export class TournamentService {
   }
 
   private async unregister(userId: string, tournament: any) {
-    if (tournament.status !== 'registration_open' && tournament.status !== 'registration_closed') {
-      throw new BadRequestException('Cannot unregister at this stage');
+    if (
+      tournament.status !== "registration_open" &&
+      tournament.status !== "registration_closed"
+    ) {
+      throw new BadRequestException("Cannot unregister at this stage");
     }
 
     const registration = await this.prisma.tournamentRegistration.findUnique({
       where: { tournamentId_userId: { tournamentId: tournament.id, userId } },
     });
-    if (!registration) throw new NotFoundException('Not registered');
+    if (!registration) throw new NotFoundException("Not registered");
 
     if (registration.checkedIn) {
-      throw new BadRequestException('Cannot unregister after check-in');
+      throw new BadRequestException("Cannot unregister after check-in");
     }
 
     await this.prisma.tournamentRegistration.delete({
@@ -212,22 +269,27 @@ export class TournamentService {
     });
 
     if (tournament.entryFee > 0) {
-      await this.releaseTournamentFunds(userId, tournament.entryFee, tournament.id);
+      await this.releaseTournamentFunds(
+        userId,
+        tournament.entryFee,
+        tournament.id,
+      );
     }
 
     return { success: true };
   }
 
   private async checkIn(userId: string, tournament: any) {
-    if (tournament.status !== 'check_in') {
-      throw new BadRequestException('Check-in not open');
+    if (tournament.status !== "check_in") {
+      throw new BadRequestException("Check-in not open");
     }
 
     const registration = await this.prisma.tournamentRegistration.findUnique({
       where: { tournamentId_userId: { tournamentId: tournament.id, userId } },
     });
-    if (!registration) throw new NotFoundException('Not registered');
-    if (registration.checkedIn) throw new BadRequestException('Already checked in');
+    if (!registration) throw new NotFoundException("Not registered");
+    if (registration.checkedIn)
+      throw new BadRequestException("Already checked in");
 
     await this.prisma.tournamentRegistration.update({
       where: { id: registration.id },
@@ -239,14 +301,15 @@ export class TournamentService {
 
   private async publish(tournament: any, userId: string) {
     if (tournament.createdById !== userId) {
-      throw new ForbiddenException('Not the tournament creator');
+      throw new ForbiddenException("Not the tournament creator");
     }
-    if (tournament.status !== 'draft') {
-      throw new BadRequestException('Can only publish draft tournaments');
+    if (tournament.status !== "draft") {
+      throw new BadRequestException("Can only publish draft tournaments");
     }
 
     const now = new Date();
-    const newStatus = now >= tournament.registrationOpensAt ? 'registration_open' : 'published';
+    const newStatus =
+      now >= tournament.registrationOpensAt ? "registration_open" : "published";
 
     await this.prisma.tournament.update({
       where: { id: tournament.id },
@@ -258,10 +321,13 @@ export class TournamentService {
 
   private async cancel(tournament: any, userId: string) {
     if (tournament.createdById !== userId) {
-      throw new ForbiddenException('Not the tournament creator');
+      throw new ForbiddenException("Not the tournament creator");
     }
-    if (tournament.status === 'completed' || tournament.status === 'cancelled') {
-      throw new BadRequestException('Cannot cancel');
+    if (
+      tournament.status === "completed" ||
+      tournament.status === "cancelled"
+    ) {
+      throw new BadRequestException("Cannot cancel");
     }
 
     // Refund entry fees
@@ -271,13 +337,17 @@ export class TournamentService {
 
     for (const reg of registrations) {
       if (tournament.entryFee > 0) {
-        await this.refundTournamentFunds(reg.userId, tournament.entryFee, tournament.id);
+        await this.refundTournamentFunds(
+          reg.userId,
+          tournament.entryFee,
+          tournament.id,
+        );
       }
     }
 
     await this.prisma.tournament.update({
       where: { id: tournament.id },
-      data: { status: 'cancelled', completedAt: new Date() },
+      data: { status: "cancelled", completedAt: new Date() },
     });
 
     return { success: true };
@@ -287,12 +357,18 @@ export class TournamentService {
   // WALLET HELPERS (tournament fund locking)
   // ============================================
 
-  private async lockTournamentFunds(userId: string, amount: number, tournamentId: string) {
+  private async lockTournamentFunds(
+    userId: string,
+    amount: number,
+    tournamentId: string,
+  ) {
     try {
       await this.prisma.$transaction(async (tx: any) => {
         const wallet = await tx.wallet.findUnique({ where: { userId } });
         if (!wallet || wallet.available < amount) {
-          throw new BadRequestException('Insufficient funds for tournament entry');
+          throw new BadRequestException(
+            "Insufficient funds for tournament entry",
+          );
         }
         const newAvailable = wallet.available - BigInt(amount);
         const newLocked = wallet.locked + BigInt(amount);
@@ -304,10 +380,10 @@ export class TournamentService {
           data: {
             walletId: wallet.id,
             userId,
-            type: 'debit',
+            type: "debit",
             amount: -BigInt(amount),
-            balanceType: 'available',
-            referenceType: 'adjustment',
+            balanceType: "available",
+            referenceType: "adjustment",
             referenceId: tournamentId,
             description: `Tournament entry fee lock: ${tournamentId}`,
             runningBalance: newAvailable,
@@ -316,16 +392,22 @@ export class TournamentService {
         });
       });
     } catch (error) {
-      this.logger.warn(`Failed to lock tournament funds for user ${userId}: ${error.message}`);
+      this.logger.warn(
+        `Failed to lock tournament funds for user ${userId}: ${error.message}`,
+      );
       throw error;
     }
   }
 
-  private async releaseTournamentFunds(userId: string, amount: number, tournamentId: string) {
+  private async releaseTournamentFunds(
+    userId: string,
+    amount: number,
+    tournamentId: string,
+  ) {
     try {
       await this.prisma.$transaction(async (tx: any) => {
         const wallet = await tx.wallet.findUnique({ where: { userId } });
-        if (!wallet) throw new Error('Wallet not found');
+        if (!wallet) throw new Error("Wallet not found");
         const newLocked = wallet.locked - BigInt(amount);
         const newAvailable = wallet.available + BigInt(amount);
         await tx.wallet.update({
@@ -336,10 +418,10 @@ export class TournamentService {
           data: {
             walletId: wallet.id,
             userId,
-            type: 'credit',
+            type: "credit",
             amount: BigInt(amount),
-            balanceType: 'available',
-            referenceType: 'adjustment',
+            balanceType: "available",
+            referenceType: "adjustment",
             referenceId: tournamentId,
             description: `Tournament entry fee release: ${tournamentId}`,
             runningBalance: newAvailable,
@@ -348,15 +430,21 @@ export class TournamentService {
         });
       });
     } catch (error) {
-      this.logger.warn(`Failed to release tournament funds for user ${userId}: ${error.message}`);
+      this.logger.warn(
+        `Failed to release tournament funds for user ${userId}: ${error.message}`,
+      );
     }
   }
 
-  private async refundTournamentFunds(userId: string, amount: number, tournamentId: string) {
+  private async refundTournamentFunds(
+    userId: string,
+    amount: number,
+    tournamentId: string,
+  ) {
     try {
       await this.prisma.$transaction(async (tx: any) => {
         const wallet = await tx.wallet.findUnique({ where: { userId } });
-        if (!wallet) throw new Error('Wallet not found');
+        if (!wallet) throw new Error("Wallet not found");
         const newLocked = wallet.locked - BigInt(amount);
         const newAvailable = wallet.available + BigInt(amount);
         await tx.wallet.update({
@@ -367,10 +455,10 @@ export class TournamentService {
           data: {
             walletId: wallet.id,
             userId,
-            type: 'credit',
+            type: "credit",
             amount: BigInt(amount),
-            balanceType: 'available',
-            referenceType: 'adjustment',
+            balanceType: "available",
+            referenceType: "adjustment",
             referenceId: tournamentId,
             description: `Tournament entry fee refund (cancelled): ${tournamentId}`,
             runningBalance: newAvailable,
@@ -379,7 +467,9 @@ export class TournamentService {
         });
       });
     } catch (error) {
-      this.logger.warn(`Failed to refund tournament funds for user ${userId}: ${error.message}`);
+      this.logger.warn(
+        `Failed to refund tournament funds for user ${userId}: ${error.message}`,
+      );
     }
   }
 
@@ -389,35 +479,40 @@ export class TournamentService {
 
   async generateBracket(tournamentId: string) {
     const tournament = await this.getTournament(tournamentId);
-    
-    if (tournament.status !== 'registration_closed' && tournament.status !== 'check_in') {
-      throw new BadRequestException('Registration must be closed before generating bracket');
+
+    if (
+      tournament.status !== "registration_closed" &&
+      tournament.status !== "check_in"
+    ) {
+      throw new BadRequestException(
+        "Registration must be closed before generating bracket",
+      );
     }
 
     // Get checked-in participants
     const participants = await this.prisma.tournamentRegistration.findMany({
-      where: { 
-        tournamentId, 
+      where: {
+        tournamentId,
         checkedIn: true,
         eliminatedAt: null,
       },
-      orderBy: { registeredAt: 'asc' },
+      orderBy: { registeredAt: "asc" },
     });
 
     if (participants.length < 2) {
-      throw new BadRequestException('Need at least 2 participants');
+      throw new BadRequestException("Need at least 2 participants");
     }
 
     // Generate knockout bracket
     const bracket = this.createKnockoutBracket(participants);
-    
+
     // Create first round matches
     await this.createBracketMatches(tournamentId, bracket.rounds[0]);
 
     // Update tournament status
     await this.prisma.tournament.update({
       where: { id: tournamentId },
-      data: { status: 'in_progress', startedAt: new Date() },
+      data: { status: "in_progress", startedAt: new Date() },
     });
 
     return bracket;
@@ -426,7 +521,7 @@ export class TournamentService {
   private createKnockoutBracket(participants: any[]) {
     // Shuffle for random seeding
     const shuffled = [...participants].sort(() => Math.random() - 0.5);
-    
+
     const rounds: any[] = [];
     let currentRound = shuffled.map((p, i) => ({
       seed: i + 1,
@@ -454,28 +549,39 @@ export class TournamentService {
       }
       rounds.push({ roundNumber, matches });
       // Next round will have half the players (winners)
-      currentRound = matches.map((_, i) => ({ seed: i + 1, registrationId: null, userId: null })); // Placeholders for winners
+      currentRound = matches.map((_, i) => ({
+        seed: i + 1,
+        registrationId: null,
+        userId: null,
+      })); // Placeholders for winners
       roundNumber++;
     }
 
     return { rounds };
   }
 
-  private async createBracketMatches(tournamentId: string, roundMatches: any[]) {
+  private async createBracketMatches(
+    tournamentId: string,
+    roundMatches: any[],
+  ) {
     for (const matchData of roundMatches) {
       if (matchData.walkover) {
         // Auto-advance
         await this.prisma.tournamentRegistration.update({
           where: { id: matchData.player1.registrationId },
-          data: { /* advance to next round */ },
+          data: {/* advance to next round */},
         });
         continue;
       }
 
       // Create match
-      await this.gameService.createMatch(matchData.player1.userId, 'tournament', {
-        entryFee: 0, // Already paid entry fee
-      });
+      await this.gameService.createMatch(
+        matchData.player1.userId,
+        "tournament",
+        {
+          entryFee: 0, // Already paid entry fee
+        },
+      );
     }
   }
 
@@ -490,35 +596,35 @@ export class TournamentService {
     // Published -> Registration Open
     await this.prisma.tournament.updateMany({
       where: {
-        status: 'published',
+        status: "published",
         registrationOpensAt: { lte: now },
       },
-      data: { status: 'registration_open' },
+      data: { status: "registration_open" },
     });
 
     // Registration Open -> Registration Closed
     await this.prisma.tournament.updateMany({
       where: {
-        status: 'registration_open',
+        status: "registration_open",
         registrationClosesAt: { lte: now },
       },
-      data: { status: 'registration_closed' },
+      data: { status: "registration_closed" },
     });
 
     // Registration Closed -> Check-in (if configured)
     await this.prisma.tournament.updateMany({
       where: {
-        status: 'registration_closed',
+        status: "registration_closed",
         checkInStartsAt: { lte: now },
         checkInEndsAt: { gte: now },
       },
-      data: { status: 'check_in' },
+      data: { status: "check_in" },
     });
 
     // Check-in -> In Progress (auto-generate bracket)
     const tournamentsToStart = await this.prisma.tournament.findMany({
       where: {
-        status: 'check_in',
+        status: "check_in",
         checkInEndsAt: { lte: now },
       },
     });
@@ -527,7 +633,9 @@ export class TournamentService {
       try {
         await this.generateBracket(t.id);
       } catch (error) {
-        this.logger.error(`Failed to start tournament ${t.id}: ${error.message}`);
+        this.logger.error(
+          `Failed to start tournament ${t.id}: ${error.message}`,
+        );
       }
     }
   }

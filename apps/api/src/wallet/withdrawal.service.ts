@@ -2,15 +2,21 @@
 // Withdrawal Service
 // ============================================
 
-import { Injectable, Logger, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { PaymentMethod } from '@prisma/client';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { PaymentMethod } from "@prisma/client";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { WalletService } from './wallet.service';
-import { LedgerService } from './ledger.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { WalletService } from "./wallet.service";
+import { LedgerService } from "./ledger.service";
 
-import type { WithdrawalRequest } from '@ludo-nexus/validation';
+import type { WithdrawalRequest } from "@ludo-nexus/validation";
 
 @Injectable()
 export class WithdrawalService {
@@ -30,33 +36,46 @@ export class WithdrawalService {
       select: { kycStatus: true, isPhoneVerified: true },
     });
 
-    if (!user) throw new NotFoundException('User not found');
-    if (user.kycStatus !== 'verified') {
-      throw new ForbiddenException('KYC verification required for withdrawals');
+    if (!user) throw new NotFoundException("User not found");
+    if (user.kycStatus !== "verified") {
+      throw new ForbiddenException("KYC verification required for withdrawals");
     }
     if (!user.isPhoneVerified) {
-      throw new ForbiddenException('Phone verification required for withdrawals');
+      throw new ForbiddenException(
+        "Phone verification required for withdrawals",
+      );
     }
 
     // Check available balance (only available balance can be withdrawn)
     const balance = await this.walletService.getBalance(userId);
     if (balance.available < data.amount) {
-      throw new BadRequestException('Insufficient available balance');
+      throw new BadRequestException("Insufficient available balance");
     }
 
     // Check minimum withdrawal amount
-    const minWithdrawal = this.configService.get<number>('MIN_WITHDRAWAL_AMOUNT') ?? 100;
+    const minWithdrawal =
+      this.configService.get<number>("MIN_WITHDRAWAL_AMOUNT") ?? 100;
     if (data.amount < minWithdrawal) {
-      throw new BadRequestException(`Minimum withdrawal amount is ${minWithdrawal}`);
+      throw new BadRequestException(
+        `Minimum withdrawal amount is ${minWithdrawal}`,
+      );
     }
 
     // Calculate fee
-    const feePercent = this.configService.get<number>('WITHDRAWAL_FEE_PERCENT') ?? 2;
-    const fee = Math.floor(data.amount * feePercent / 100);
+    const feePercent =
+      this.configService.get<number>("WITHDRAWAL_FEE_PERCENT") ?? 2;
+    const fee = Math.floor((data.amount * feePercent) / 100);
     const netAmount = data.amount - fee;
 
     // Lock funds
-    await this.ledgerService.transfer(userId, data.amount, 'available', 'locked', `withdrawal-${Date.now()}`, 'Withdrawal request');
+    await this.ledgerService.transfer(
+      userId,
+      data.amount,
+      "available",
+      "locked",
+      `withdrawal-${Date.now()}`,
+      "Withdrawal request",
+    );
 
     // Create withdrawal request
     const withdrawal = await this.prisma.withdrawal.create({
@@ -67,15 +86,17 @@ export class WithdrawalService {
         netAmount,
         destinationMethod: data.destinationMethod,
         destinationDetails: data.destinationDetails as any,
-        status: 'requested',
+        status: "requested",
       },
     });
 
     // In production, send OTP via a real OTP provider for confirmation.
-    this.logger.log(`Withdrawal OTP sent (dev mode) for withdrawal ${withdrawal.id}`);
+    this.logger.log(
+      `Withdrawal OTP sent (dev mode) for withdrawal ${withdrawal.id}`,
+    );
     // For demo mode, auto-approve
-    if (this.configService.get<string>('NODE_ENV') !== 'production') {
-      return this.processWithdrawal(withdrawal.id, 'auto');
+    if (this.configService.get<string>("NODE_ENV") !== "production") {
+      return this.processWithdrawal(withdrawal.id, "auto");
     }
 
     return withdrawal;
@@ -86,16 +107,19 @@ export class WithdrawalService {
       where: { id: withdrawalId },
     });
 
-    if (!withdrawal) throw new NotFoundException('Withdrawal not found');
-    if (withdrawal.status !== 'requested' && withdrawal.status !== 'under_review') {
-      throw new BadRequestException('Withdrawal cannot be processed');
+    if (!withdrawal) throw new NotFoundException("Withdrawal not found");
+    if (
+      withdrawal.status !== "requested" &&
+      withdrawal.status !== "under_review"
+    ) {
+      throw new BadRequestException("Withdrawal cannot be processed");
     }
 
     // Update status
     await this.prisma.withdrawal.update({
       where: { id: withdrawalId },
       data: {
-        status: 'processing',
+        status: "processing",
         reviewedAt: new Date(),
         reviewedById: adminId,
       },
@@ -107,7 +131,7 @@ export class WithdrawalService {
       await this.completeWithdrawal(withdrawalId);
     }, 5000);
 
-    return { success: true, message: 'Withdrawal processing started' };
+    return { success: true, message: "Withdrawal processing started" };
   }
 
   private async completeWithdrawal(withdrawalId: string) {
@@ -121,24 +145,28 @@ export class WithdrawalService {
     await this.ledgerService.debit(
       withdrawal.userId,
       Number(withdrawal.amount),
-      'locked',
-      'withdrawal',
+      "locked",
+      "withdrawal",
       withdrawalId,
-      `Withdrawal to ${withdrawal.destinationMethod}`
+      `Withdrawal to ${withdrawal.destinationMethod}`,
     );
 
     // Create transaction record
     await this.prisma.transaction.create({
       data: {
         userId: withdrawal.userId,
-        walletId: (await this.prisma.wallet.findUnique({ where: { userId: withdrawal.userId } }))!.id,
-        type: 'withdrawal',
-        status: 'completed',
+        walletId: (await this.prisma.wallet.findUnique({
+          where: { userId: withdrawal.userId },
+        }))!.id,
+        type: "withdrawal",
+        status: "completed",
         amount: -withdrawal.amount,
         fee: withdrawal.fee,
         netAmount: -withdrawal.netAmount,
-        balanceType: 'available',
-        paymentMethod: (withdrawal.destinationMethod as PaymentMethod) ?? PaymentMethod.internal,
+        balanceType: "available",
+        paymentMethod:
+          (withdrawal.destinationMethod as PaymentMethod) ??
+          PaymentMethod.internal,
         paymentReference: withdrawalId,
         description: `Withdrawal to ${withdrawal.destinationMethod}`,
         idempotencyKey: `txn-${withdrawalId}`,
@@ -150,19 +178,21 @@ export class WithdrawalService {
     await this.prisma.withdrawal.update({
       where: { id: withdrawalId },
       data: {
-        status: 'completed',
+        status: "completed",
         processedAt: new Date(),
       },
     });
 
-    this.logger.log(`Withdrawal ${withdrawalId} completed for user ${withdrawal.userId}`);
+    this.logger.log(
+      `Withdrawal ${withdrawalId} completed for user ${withdrawal.userId}`,
+    );
   }
 
   async getWithdrawals(userId: string, page = 1, limit = 20) {
     const [withdrawals, total] = await Promise.all([
       this.prisma.withdrawal.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -186,7 +216,7 @@ export class WithdrawalService {
     });
 
     if (!withdrawal || withdrawal.userId !== userId) {
-      throw new NotFoundException('Withdrawal not found');
+      throw new NotFoundException("Withdrawal not found");
     }
 
     return {
@@ -205,42 +235,53 @@ export class WithdrawalService {
     const [withdrawals, total] = await Promise.all([
       this.prisma.withdrawal.findMany({
         where,
-        include: { user: { select: { id: true, username: true, email: true, kycStatus: true } } },
-        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: { id: true, username: true, email: true, kycStatus: true },
+          },
+        },
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
       this.prisma.withdrawal.count({ where }),
     ]);
 
-    return { data: withdrawals, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    return {
+      data: withdrawals,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async approveWithdrawal(withdrawalId: string, adminId: string) {
     return this.processWithdrawal(withdrawalId, adminId);
   }
 
-  async rejectWithdrawal(withdrawalId: string, adminId: string, reason: string) {
+  async rejectWithdrawal(
+    withdrawalId: string,
+    adminId: string,
+    reason: string,
+  ) {
     const withdrawal = await this.prisma.withdrawal.findUnique({
       where: { id: withdrawalId },
     });
 
-    if (!withdrawal) throw new NotFoundException('Withdrawal not found');
+    if (!withdrawal) throw new NotFoundException("Withdrawal not found");
 
     // Release locked funds back to available
     await this.ledgerService.transfer(
       withdrawal.userId,
       Number(withdrawal.amount),
-      'locked',
-      'available',
+      "locked",
+      "available",
       withdrawalId,
-      `Withdrawal rejected: ${reason}`
+      `Withdrawal rejected: ${reason}`,
     );
 
     await this.prisma.withdrawal.update({
       where: { id: withdrawalId },
       data: {
-        status: 'rejected',
+        status: "rejected",
         reviewedAt: new Date(),
         reviewedById: adminId,
         rejectionReason: reason,

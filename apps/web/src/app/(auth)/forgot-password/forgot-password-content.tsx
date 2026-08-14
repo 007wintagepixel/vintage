@@ -2,28 +2,44 @@
 // Forgot Password Content (Client Component)
 // ============================================
 
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { Dice1, Mail, Loader2, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {
+  Dice1,
+  Mail,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 const forgotSchema = z.object({
-  identifier: z.string().email('Please enter a valid email address'),
+  identifier: z.string().email("Please enter a valid email address"),
 });
 
-const resetSchema = z.object({
-  password: z.string().min(8, 'Password must be at least 8 characters').max(128).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 'Password must contain uppercase, lowercase, number, and special character'),
-  confirmPassword: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-});
+const resetSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(128)
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        "Password must contain uppercase, lowercase, number, and special character",
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type ForgotFormData = z.infer<typeof forgotSchema>;
 type ResetFormData = z.infer<typeof resetSchema>;
@@ -31,8 +47,11 @@ type ResetFormData = z.infer<typeof resetSchema>;
 export default function ForgotPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/login';
-  
+  // const callbackUrl = searchParams.get("callbackUrl") || "/login"; // TODO: use for redirect after reset
+  // searchParams is used for callbackUrl extraction
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _callbackUrl = searchParams.get("callbackUrl") || "/login";
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -52,24 +71,28 @@ export default function ForgotPasswordContent() {
   const onSubmit = async (data: ForgotFormData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier: data.identifier }),
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(result.message || 'Failed to send reset email');
+        throw new Error(result.message || "Failed to send reset email");
       }
 
       setSuccess(true);
       setStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reset email. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to send reset email. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -84,27 +107,31 @@ export default function ForgotPasswordContent() {
   const resetPassword = async (data: ResetFormData) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(result.message || 'Failed to reset password');
+        throw new Error(result.message || "Failed to reset password");
       }
 
       setSuccess(true);
       setTimeout(() => {
-        router.push('/login?reset=success');
+        router.push("/login?reset=success");
         router.refresh();
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset password. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to reset password. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -119,16 +146,18 @@ export default function ForgotPasswordContent() {
         <div className="relative">
           <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
           <input
-            {...forgotForm.register('identifier')}
+            {...forgotForm.register("identifier")}
             type="email"
             id="identifier"
-            className={`input pl-12 ${forgotForm.formState.errors.identifier ? 'input-error' : ''}`}
+            className={`input pl-12 ${forgotForm.formState.errors.identifier ? "input-error" : ""}`}
             placeholder="your@email.com"
             autoComplete="email"
             disabled={isLoading}
           />
           {forgotForm.formState.errors.identifier && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{forgotForm.formState.errors.identifier.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {forgotForm.formState.errors.identifier.message}
+            </p>
           )}
         </div>
       </div>
@@ -150,8 +179,18 @@ export default function ForgotPasswordContent() {
         ) : (
           <>
             <span>Send Reset Code</span>
-            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            <svg
+              className="w-5 h-5 transition-transform group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
             </svg>
           </>
         )}
@@ -171,7 +210,8 @@ export default function ForgotPasswordContent() {
       <div>
         <h2 className="font-display text-heading-lg mb-2">Check Your Email</h2>
         <p className="text-text-secondary text-body">
-          We&apos;ve sent a 6-digit code to your email. Enter it below to continue.
+          We&apos;ve sent a 6-digit code to your email. Enter it below to
+          continue.
         </p>
       </div>
       <form onSubmit={verifyOtp} className="space-y-4">
@@ -195,24 +235,28 @@ export default function ForgotPasswordContent() {
           Verify Code
         </button>
         <p className="text-body-sm text-text-muted">
-          Didn&apos;t receive the code? <button className="text-primary-glow hover:underline">Resend</button>
+          Didn&apos;t receive the code?{" "}
+          <button className="text-primary-glow hover:underline">Resend</button>
         </p>
       </form>
     </div>
   );
 
   const renderStep3 = () => (
-    <form onSubmit={resetForm.handleSubmit(resetPassword)} className="space-y-6">
+    <form
+      onSubmit={resetForm.handleSubmit(resetPassword)}
+      className="space-y-6"
+    >
       <div>
         <label htmlFor="password" className="label">
           New Password
         </label>
         <div className="relative">
           <input
-            {...resetForm.register('password')}
-            type={showPassword ? 'text' : 'password'}
+            {...resetForm.register("password")}
+            type={showPassword ? "text" : "password"}
             id="password"
-            className={`input ${resetForm.formState.errors.password ? 'input-error' : ''}`}
+            className={`input ${resetForm.formState.errors.password ? "input-error" : ""}`}
             placeholder="Create a strong password"
             autoComplete="new-password"
             disabled={isLoading}
@@ -223,10 +267,12 @@ export default function ForgotPasswordContent() {
             className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
             disabled={isLoading}
           >
-            {showPassword ? '👁️' : '🔒'}
+            {showPassword ? "👁️" : "🔒"}
           </button>
           {resetForm.formState.errors.password && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{resetForm.formState.errors.password.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {resetForm.formState.errors.password.message}
+            </p>
           )}
         </div>
       </div>
@@ -237,19 +283,22 @@ export default function ForgotPasswordContent() {
         </label>
         <div className="relative">
           <input
-            {...resetForm.register('confirmPassword', {
-              required: 'Please confirm your password',
-              validate: value => value === watch('password') || 'Passwords do not match',
+            {...resetForm.register("confirmPassword", {
+              required: "Please confirm your password",
+              validate: (value) =>
+                value === watch("password") || "Passwords do not match",
             })}
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             id="confirmPassword"
-            className={`input ${resetForm.formState.errors.confirmPassword ? 'input-error' : ''}`}
+            className={`input ${resetForm.formState.errors.confirmPassword ? "input-error" : ""}`}
             placeholder="Confirm your new password"
             autoComplete="new-password"
             disabled={isLoading}
           />
           {resetForm.formState.errors.confirmPassword && (
-            <p className="mt-1.5 text-body-sm text-accent-red">{resetForm.formState.errors.confirmPassword.message}</p>
+            <p className="mt-1.5 text-body-sm text-accent-red">
+              {resetForm.formState.errors.confirmPassword.message}
+            </p>
           )}
         </div>
       </div>
@@ -267,8 +316,18 @@ export default function ForgotPasswordContent() {
         ) : (
           <>
             <span>Reset Password</span>
-            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            <svg
+              className="w-5 h-5 transition-transform group-hover:translate-x-1"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
             </svg>
           </>
         )}
@@ -291,7 +350,9 @@ export default function ForgotPasswordContent() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-glow to-accent-magenta flex items-center justify-center">
               <Dice1 className="w-6 h-6 text-text-inverse" />
             </div>
-            <span className="font-display text-heading-lg gradient-text">Ludo Nexus</span>
+            <span className="font-display text-heading-lg gradient-text">
+              Ludo Nexus
+            </span>
           </Link>
         </div>
       </nav>
@@ -302,16 +363,23 @@ export default function ForgotPasswordContent() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="glass-card-strong p-8 md:p-10 rounded-2xl"
           >
             <div className="flex items-center gap-2 mb-8">
-              <Link href="/login" className="text-text-muted hover:text-text-primary transition-colors p-2 rounded-lg hover:bg-surface-tertiary">
+              <Link
+                href="/login"
+                className="text-text-muted hover:text-text-primary transition-colors p-2 rounded-lg hover:bg-surface-tertiary"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex-1 text-center">
-                <h1 className="font-display text-heading-xl mb-1">Forgot Password?</h1>
-                <p className="text-text-secondary text-body">Enter your email to reset your password</p>
+                <h1 className="font-display text-heading-xl mb-1">
+                  Forgot Password?
+                </h1>
+                <p className="text-text-secondary text-body">
+                  Enter your email to reset your password
+                </p>
               </div>
             </div>
 
@@ -320,9 +388,9 @@ export default function ForgotPasswordContent() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-                  success 
-                    ? 'bg-accent-green/20 border border-accent-green/30 text-accent-green' 
-                    : 'bg-accent-red/20 border border-accent-red/30 text-accent-red'
+                  success
+                    ? "bg-accent-green/20 border border-accent-green/30 text-accent-green"
+                    : "bg-accent-red/20 border border-accent-red/30 text-accent-red"
                 }`}
               >
                 {success ? (
@@ -344,8 +412,11 @@ export default function ForgotPasswordContent() {
             {step === 3 && renderStep3()}
 
             <p className="mt-8 text-center text-body-sm text-text-muted">
-              Remember your password?{' '}
-              <Link href="/login" className="text-primary-glow hover:text-primary font-medium">
+              Remember your password?{" "}
+              <Link
+                href="/login"
+                className="text-primary-glow hover:text-primary font-medium"
+              >
                 Sign in
               </Link>
             </p>

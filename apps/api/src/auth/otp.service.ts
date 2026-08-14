@@ -2,12 +2,11 @@
 // OTP Service
 // ============================================
 
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
-import { PrismaService } from '../prisma/prisma.service';
-import { RateLimitService } from './rate-limit.service';
+import { PrismaService } from "../prisma/prisma.service";
+import { RateLimitService } from "./rate-limit.service";
 
 @Injectable()
 export class OtpService {
@@ -31,7 +30,12 @@ export class OtpService {
   async sendOTP(userId: string, identifier: string, type: string) {
     // Generate 6-digit OTP
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + (this.OTP_EXPIRY[type as keyof typeof this.OTP_EXPIRY] ?? 10) * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() +
+        (this.OTP_EXPIRY[type as keyof typeof this.OTP_EXPIRY] ?? 10) *
+          60 *
+          1000,
+    );
 
     // Store OTP
     await this.prisma.oTP.create({
@@ -53,7 +57,11 @@ export class OtpService {
     return { sent: true, expiresAt };
   }
 
-  async verifyOTP(identifier: string, code: string, type: string): Promise<{ valid: boolean; error?: string; email?: string }> {
+  async verifyOTP(
+    identifier: string,
+    code: string,
+    type: string,
+  ): Promise<{ valid: boolean; error?: string; email?: string }> {
     const otp = await this.prisma.oTP.findFirst({
       where: {
         identifier,
@@ -62,11 +70,11 @@ export class OtpService {
         usedAt: null,
         expiresAt: { gt: new Date() },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
     if (!otp) {
-      return { valid: false, error: 'Invalid or expired OTP' };
+      return { valid: false, error: "Invalid or expired OTP" };
     }
 
     // Mark as used
@@ -81,10 +89,7 @@ export class OtpService {
   async cleanupExpiredOTPs() {
     const result = await this.prisma.oTP.deleteMany({
       where: {
-        OR: [
-          { expiresAt: { lt: new Date() } },
-          { usedAt: { not: null } },
-        ],
+        OR: [{ expiresAt: { lt: new Date() } }, { usedAt: { not: null } }],
       },
     });
     this.logger.log(`Cleaned up ${result.count} expired/used OTPs`);

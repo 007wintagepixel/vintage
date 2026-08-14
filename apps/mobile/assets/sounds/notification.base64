@@ -1,0 +1,3 @@
+# Base64 encoded WAV file for notification sound
+# This is a simple 1-second beep at 440Hz
+# To use: base64 -d notification.base64 > notification.wav

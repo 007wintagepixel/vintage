@@ -2,17 +2,17 @@
 // JWT Strategy
 // ============================================
 
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
+import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { PassportStrategy } from "@nestjs/passport";
+import { ExtractJwt, Strategy } from "passport-jwt";
+import { ConfigService } from "@nestjs/config";
+import { Request } from "express";
 
-import { PrismaService } from '../../prisma/prisma.service';
-import { SessionService } from '../session.service';
+import { PrismaService } from "../../prisma/prisma.service";
+import { SessionService } from "../session.service";
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+export class JwtStrategy extends PassportStrategy(Strategy, "jwt") {
   constructor(
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
@@ -24,9 +24,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
         (req: Request) => req?.cookies?.access_token,
       ]),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
-      issuer: 'ludo-nexus',
-      audience: 'ludo-nexus-api',
+      secretOrKey: configService.get<string>("JWT_SECRET"),
+      issuer: "ludo-nexus",
+      audience: "ludo-nexus-api",
       passReqToCallback: true,
     });
   }
@@ -37,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (sessionId) {
       const session = await this.sessionService.validateSession(sessionId);
       if (!session) {
-        throw new UnauthorizedException('Session expired or invalid');
+        throw new UnauthorizedException("Session expired or invalid");
       }
     }
 
@@ -57,7 +57,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
 
     if (!user || user.deletedAt) {
-      throw new UnauthorizedException('User not found or deactivated');
+      throw new UnauthorizedException("User not found or deactivated");
     }
 
     // Attach session ID to request for later use
