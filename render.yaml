@@ -22,6 +22,11 @@ services:
         fromDatabase:
           name: ludo-nexus-db
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: ludo-nexus-redis
+          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: JWT_REFRESH_SECRET
@@ -46,6 +51,14 @@ services:
         value: "false"
       - key: ENABLE_TOURNAMENTS
         value: "true"
+
+  # Redis-compatible Key Value store for Socket.IO and background jobs.
+  # It is reachable only over Render's private network.
+  - type: keyvalue
+    name: ludo-nexus-redis
+    plan: free
+    region: singapore
+    ipAllowList: []
 
 databases:
   # ──────────────────────────────────────────────
