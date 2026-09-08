@@ -51,3 +51,4 @@ screenshot-data.txt
 *.tmp
 *.bakpackages/game-engine/coverage/
 .vercel
+.env*
