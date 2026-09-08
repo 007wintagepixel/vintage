@@ -3,7 +3,6 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     unoptimized: true,
-    domains: ['localhost', 'lh3.googleusercontent.com', 'avatars.githubusercontent.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -17,9 +16,6 @@ const nextConfig = {
     '@ludo-nexus/api-client',
     '@ludo-nexus/ui',
   ],
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: false },
-  staticPageGenerationTimeout: 180,
   experimental: {
     optimizePackageImports: ['lucide-react'],
   },
