@@ -50,3 +50,4 @@ screenshot-data.txt
 # Temp files
 *.tmp
 *.bakpackages/game-engine/coverage/
+.vercel

@@ -12,7 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@ludo-nexus/shared-types": "workspace:*",
+    "@ludo-nexus/shared-types": "file:../shared-types",
     "zod": "^3.23.0"
   },
   "devDependencies": {

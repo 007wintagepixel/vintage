@@ -13,7 +13,7 @@
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
-    "@ludo-nexus/shared-types": "workspace:*"
+    "@ludo-nexus/shared-types": "file:../shared-types"
   },
   "devDependencies": {
     "typescript": "^5.5.0",

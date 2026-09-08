@@ -23,9 +23,9 @@
     "clean": "rm -rf dist node_modules/.prisma"
   },
   "dependencies": {
-    "@ludo-nexus/game-engine": "workspace:*",
-    "@ludo-nexus/shared-types": "workspace:*",
-    "@ludo-nexus/validation": "workspace:*",
+    "@ludo-nexus/game-engine": "file:../game-engine",
+    "@ludo-nexus/shared-types": "file:../shared-types",
+    "@ludo-nexus/validation": "file:../validation",
     "@nestjs/bullmq": "^10.0.1",
     "@nestjs/common": "^10.3.0",
     "@nestjs/config": "^3.2.0",
