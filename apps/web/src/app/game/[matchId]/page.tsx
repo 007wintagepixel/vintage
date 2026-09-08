@@ -13,6 +13,7 @@ import {
   GameOver,
   GameErrorBoundary,
   GameHeader,
+  ReconnectionIndicator,
 } from "@/components/game";
 import { useGameSocket } from "./hooks/useGameSocket";
 
@@ -324,6 +325,14 @@ function GameBoard({ matchId }: { matchId: string }) {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Reconnection Indicator */}
+          <ReconnectionIndicator
+            matchId={matchId}
+            accessToken={accessToken}
+            userId={user.id}
+            username={user.username}
+          />
 
           {showChat && (
             <div

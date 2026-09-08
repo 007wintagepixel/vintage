@@ -149,6 +149,71 @@
     animation-delay: 300ms;
   }
 
+  /* Reconnection Indicator */
+  .reconnection-indicator {
+    @apply fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 rounded-xl glass-panel-strong text-body-sm font-medium;
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  .reconnection-indicator.connected {
+    @apply text-text-secondary;
+  }
+
+  .reconnection-indicator.syncing {
+    @apply text-accent-cyan;
+  }
+
+  .reconnection-indicator.reconnecting {
+    @apply text-secondary-glow;
+  }
+
+  .reconnection-indicator.disconnected {
+    @apply text-accent-red;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot.connected {
+    @apply bg-player-green animate-pulse;
+  }
+
+  .status-dot.syncing {
+    @apply bg-accent-cyan animate-spin;
+  }
+
+  .status-dot.reconnecting {
+    @apply bg-secondary-glow animate-bounce;
+  }
+
+  .status-dot.disconnected {
+    @apply bg-accent-red;
+  }
+
+  .last-synced {
+    @apply text-xs text-text-muted ml-2;
+  }
+
+  .progress-bar {
+    @apply w-32 h-1 bg-surface-tertiary rounded-full overflow-hidden ml-2;
+  }
+
+  .progress-fill {
+    @apply h-full bg-secondary-glow rounded-full transform origin-left;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
   /* Scrollbar */
   .scrollbar-thin {
     scrollbar-width: thin;

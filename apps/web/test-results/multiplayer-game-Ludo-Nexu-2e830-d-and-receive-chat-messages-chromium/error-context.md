@@ -192,7 +192,7 @@ Call log:
   235 | });
   236 | 
   237 | // Helper function to create test match via API
-  238 | async function createTestMatch(page, options = {}) {
+  238 | async function createTestMatch(page: any, options: { mode?: string; entryFee?: number; opponentCount?: number; botDifficulty?: string } = {}) {
   239 |   const response = await page.request.post('http://localhost:3001/api/v1/game/matches', {
   240 |     data: {
   241 |       mode: options.mode || 'vs_human',

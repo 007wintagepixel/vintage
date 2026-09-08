@@ -1,28 +1,28 @@
 "use client";
 
-import { DollarSign } from "lucide-react";
+import { FileText } from "lucide-react";
 
-export default function TransactionsPage() {
+export default function AuditPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <DollarSign className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-            Transactions
+            <FileText className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+            Audit
           </h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage transactions across the platform
+            Manage audit across the platform
           </p>
         </div>
         <button className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700">
-          Add Transaction
+          Add Audit
         </button>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-6">
         <p className="text-center text-gray-500 dark:text-gray-400 py-12">
-          Transactions management page - Coming soon
+          Audit management page - Coming soon
         </p>
       </div>
     </div>

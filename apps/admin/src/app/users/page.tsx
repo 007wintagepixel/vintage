@@ -1,461 +1,331 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
 import { useState } from "react";
+import { Users, Search, Ban, UserCheck, Eye } from "lucide-react";
 import {
-  Search,
-  UserPlus,
-  Ban,
-  Eye,
-  Edit,
-  ShieldCheck,
-  MoreVertical,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+  useAdminQueries,
+  useAdminMutations,
+} from "@ludo-nexus/api-client/hooks/admin-hooks";
+import { format } from "date-fns";
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  level: number;
-  status: "active" | "inactive" | "banned";
-  lastLogin: string;
-  matches: number;
-  kyc: "verified" | "pending" | "rejected" | "not_started";
-}
+export const dynamic = "force-dynamic";
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    username: "cyber_gamer_99",
-    email: "player1@example.com",
-    level: 15,
-    status: "active",
-    lastLogin: "2 min ago",
-    matches: 234,
-    kyc: "verified",
-  },
-  {
-    id: "2",
-    username: "dice_master",
-    email: "player2@example.com",
-    level: 8,
-    status: "active",
-    lastLogin: "15 min ago",
-    matches: 89,
-    kyc: "verified",
-  },
-  {
-    id: "3",
-    username: "ludo_king_2024",
-    email: "player3@example.com",
-    level: 22,
-    status: "banned",
-    lastLogin: "3 days ago",
-    matches: 567,
-    kyc: "rejected",
-  },
-  {
-    id: "4",
-    username: "token_tactician",
-    email: "player4@example.com",
-    level: 12,
-    status: "active",
-    lastLogin: "1 hour ago",
-    matches: 156,
-    kyc: "pending",
-  },
-  {
-    id: "5",
-    username: "board_boss",
-    email: "player5@example.com",
-    level: 5,
-    status: "inactive",
-    lastLogin: "2 weeks ago",
-    matches: 23,
-    kyc: "not_started",
-  },
-  {
-    id: "6",
-    username: "pixel_phantom",
-    email: "player6@example.com",
-    level: 18,
-    status: "active",
-    lastLogin: "5 min ago",
-    matches: 312,
-    kyc: "verified",
-  },
-  {
-    id: "7",
-    username: "void_walker",
-    email: "player7@example.com",
-    level: 9,
-    status: "active",
-    lastLogin: "30 min ago",
-    matches: 178,
-    kyc: "pending",
-  },
-  {
-    id: "8",
-    username: "neon_striker",
-    email: "player8@example.com",
-    level: 25,
-    status: "banned",
-    lastLogin: "1 week ago",
-    matches: 892,
-    kyc: "verified",
-  },
-];
-
-function StatusBadge({ status }: { status: string }) {
-  const configs: Record<string, { bg: string; text: string }> = {
-    active: { bg: "bg-green-500/10", text: "text-green-400" },
-    inactive: { bg: "bg-slate-500/10", text: "text-slate-400" },
-    banned: { bg: "bg-red-500/10", text: "text-red-400" },
-    pending: { bg: "bg-amber-500/10", text: "text-amber-400" },
-    verified: { bg: "bg-green-500/10", text: "text-green-400" },
-    rejected: { bg: "bg-red-500/10", text: "text-red-400" },
-    not_started: { bg: "bg-slate-500/10", text: "text-slate-400" },
-  };
-
-  const config = configs[status] || configs.pending;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
-    >
-      {status.charAt(0).toUpperCase() + status.slice(1).replace("_", " ")}
-    </span>
-  );
-}
-
-function KycBadge({ kyc }: { kyc: string }) {
-  const configs: Record<string, { bg: string; text: string }> = {
-    verified: { bg: "bg-green-500/10", text: "text-green-400" },
-    pending: { bg: "bg-amber-500/10", text: "text-amber-400" },
-    rejected: { bg: "bg-red-500/10", text: "text-red-400" },
-    not_started: { bg: "bg-slate-500/10", text: "text-slate-400" },
-  };
-
-  const config = configs[kyc] || configs.pending;
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}
-    >
-      {kyc.charAt(0).toUpperCase() + kyc.slice(1).replace("_", " ")}
-    </span>
-  );
-}
-
-function DataTable({
-  columns,
-  data,
-  keyField,
-  actions,
-  emptyMessage = "No data available",
-}: {
-  columns: {
-    key: string;
-    header: string;
-    render?: (row: any) => React.ReactNode;
-  }[];
-  data: any[];
-  keyField: string;
-  actions?: (row: any) => React.ReactNode;
-  emptyMessage?: string;
-}) {
-  if (data.length === 0) {
-    return (
-      <div className="glass rounded-xl p-12 text-center">
-        <p className="text-slate-400">{emptyMessage}</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="glass rounded-xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-700/50 bg-slate-900/50">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
-                >
-                  {col.header}
-                </th>
-              ))}
-              {actions && (
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-800/50">
-            {data.map((row) => (
-              <tr
-                key={row[keyField]}
-                className="hover:bg-slate-800/50 transition-colors"
-              >
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className="px-6 py-4 text-sm text-slate-300"
-                  >
-                    {col.render ? col.render(row) : row[col.key]}
-                  </td>
-                ))}
-                {actions && (
-                  <td className="px-6 py-4 text-right">{actions(row)}</td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-export default function AdminUsersPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+export default function UsersPage() {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [kycFilter, setKycFilter] = useState<string>("all");
-  const usersPerPage = 10;
+  const [search, setSearch] = useState("");
+  const [kycStatus, setKycStatus] = useState<string | undefined>();
+  const [isBanned, setIsBanned] = useState<boolean | undefined>();
+  const limit = 20;
 
-  const filteredUsers = mockUsers
-    .filter((user) => {
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          user.username.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query)
-        );
-      }
-      return true;
-    })
-    .filter((user) => {
-      if (statusFilter === "all") return true;
-      return user.status === statusFilter;
-    })
-    .filter((user) => {
-      if (kycFilter === "all") return true;
-      return user.kyc === kycFilter;
-    });
+  const { users } = useAdminQueries();
+  const { banUser, unbanUser } = useAdminMutations();
 
-  const paginatedUsers = filteredUsers.slice(
-    (page - 1) * usersPerPage,
-    page * usersPerPage,
+  const usersQuery = users(
+    {
+      search: search || undefined,
+      kycStatus: kycStatus || undefined,
+      isBanned: isBanned,
+    },
+    page,
+    limit,
   );
-  const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  // Unwrap the API response: ApiResponse -> { data, meta }
+  const usersResponse = usersQuery.data;
+  const usersData = usersResponse?.data?.data || [];
+  const usersMeta = usersResponse?.data?.meta;
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPage(1);
+  };
+
+  const formatDate = (date: string | Date) =>
+    format(new Date(date), "MMM d, yyyy");
+
+  const getKycStatusBadge = (status?: string) => {
+    const badges: Record<string, string> = {
+      none: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      submitted:
+        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+      under_review:
+        "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
+      approved:
+        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+      rejected: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+    };
+    return badges[status || "none"] || badges.none;
+  };
+
+  const getKycStatusLabel = (status?: string) => {
+    const labels: Record<string, string> = {
+      none: "Not Started",
+      submitted: "Submitted",
+      under_review: "Under Review",
+      approved: "Approved",
+      rejected: "Rejected",
+    };
+    return labels[status || "none"] || "Unknown";
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
-      >
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-display-md gradient-text">Users</h1>
-          <p className="text-text-secondary mt-1">
-            Manage user accounts, status, and KYC verification
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Users className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+            Users
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Manage users across the platform
           </p>
         </div>
-        <Link href="/admin/users/new" className="btn-primary gap-2">
-          <UserPlus className="w-4 h-4" />
-          Add User
-        </Link>
-      </motion.div>
+      </div>
 
       {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card-strong p-4 rounded-2xl"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          {/* Search */}
-          <div className="relative max-w-md flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 p-4">
+        <form
+          onSubmit={handleSearch}
+          className="flex flex-col md:flex-row gap-4"
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search users..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input pl-12 w-full"
+              placeholder="Search username, email, or name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="input w-auto min-w-[150px]"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="banned">Banned</option>
-            </select>
-            <select
-              value={kycFilter}
-              onChange={(e) => setKycFilter(e.target.value)}
-              className="input w-auto min-w-[150px]"
-            >
-              <option value="all">All KYC</option>
-              <option value="verified">Verified</option>
-              <option value="pending">Pending</option>
-              <option value="rejected">Rejected</option>
-              <option value="not_started">Not Started</option>
-            </select>
-          </div>
-        </div>
-      </motion.div>
+          <select
+            value={kycStatus || ""}
+            onChange={(e) => setKycStatus(e.target.value || undefined)}
+            className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+          >
+            <option value="">All KYC Status</option>
+            <option value="none">Not Started</option>
+            <option value="submitted">Submitted</option>
+            <option value="under_review">Under Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+          <select
+            value={isBanned !== undefined ? String(isBanned) : ""}
+            onChange={(e) =>
+              setIsBanned(
+                e.target.value === "" ? undefined : e.target.value === "true",
+              )
+            }
+            className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white"
+          >
+            <option value="">All Users</option>
+            <option value="true">Banned Only</option>
+            <option value="false">Active Only</option>
+          </select>
+        </form>
+      </div>
 
       {/* Users Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <DataTable
-          columns={[
-            {
-              key: "username",
-              header: "User",
-              render: (row) => (
-                <div>
-                  <div className="font-medium text-text-primary">
-                    {row.username}
-                  </div>
-                  <div className="text-body-sm text-text-secondary">
-                    {row.email}
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: "level",
-              header: "Level",
-            },
-            {
-              key: "status",
-              header: "Status",
-              render: (row) => <StatusBadge status={row.status} />,
-            },
-            {
-              key: "kyc",
-              header: "KYC",
-              render: (row) => <KycBadge kyc={row.kyc} />,
-            },
-            {
-              key: "matches",
-              header: "Matches",
-            },
-            {
-              key: "lastLogin",
-              header: "Last Login",
-            },
-          ]}
-          data={paginatedUsers}
-          keyField="id"
-          actions={(row) => (
-            <div className="flex items-center justify-end gap-2">
-              <button
-                className="btn-ghost p-2 rounded-xl hover:bg-surface-tertiary"
-                aria-label="View user"
-              >
-                <Eye className="w-4 h-4" />
-              </button>
-              <button
-                className="btn-ghost p-2 rounded-xl hover:bg-surface-tertiary"
-                aria-label="Edit user"
-              >
-                <Edit className="w-4 h-4" />
-              </button>
-              {row.status !== "banned" ? (
-                <button
-                  className="btn-ghost p-2 rounded-xl hover:bg-accent-red/10 hover:text-accent-red"
-                  aria-label="Ban user"
-                >
-                  <Ban className="w-4 h-4" />
-                </button>
-              ) : (
-                <button
-                  className="btn-ghost p-2 rounded-xl hover:bg-accent-green/10 hover:text-accent-green"
-                  aria-label="Unban user"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                </button>
-              )}
-              <button
-                className="btn-ghost p-2 rounded-xl hover:bg-surface-tertiary"
-                aria-label="More options"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
+      <div className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-slate-700 overflow-hidden">
+        {usersQuery.isLoading ? (
+          <div className="p-12 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">Loading users...</p>
+          </div>
+        ) : usersQuery.isError ? (
+          <div className="p-12 text-center text-red-500">
+            <p>Failed to load users: {String(usersQuery.error)}</p>
+            <button
+              onClick={() => usersQuery.refetch()}
+              className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      KYC
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Wallet
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Activity
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Joined
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
+                  {usersData.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
+                      >
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    usersData.map((user: any) => (
+                      <tr
+                        key={user.id}
+                        className="hover:bg-gray-50 dark:hover:bg-slate-700/50"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                              <span className="text-primary-600 dark:text-primary-400 font-medium">
+                                {user.username?.charAt(0)?.toUpperCase() || "?"}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {user.username}
+                              </p>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {user.email}
+                              </p>
+                              {user.fullName && (
+                                <p className="text-xs text-gray-400 dark:text-gray-500">
+                                  {user.fullName}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded-full ${getKycStatusBadge(user.kycStatus)}`}
+                          >
+                            {getKycStatusLabel(user.kycStatus)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-900 dark:text-white font-mono">
+                              {Number(
+                                user.wallet?.available || 0,
+                              ).toLocaleString()}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              coins
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          <div>Matches: {user._count?.matches || 0}</div>
+                          <div>Friends: {user._count?.friends || 0}</div>
+                          <div>
+                            Tournaments: {user._count?.tournaments || 0}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                          {formatDate(user.createdAt)}
+                        </td>
+                        <td className="px-6 py-4">
+                          {user.deletedAt ? (
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+                              Banned
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                              Active
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() =>
+                                window.open(`/admin/users/${user.id}`, "_blank")
+                              }
+                              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                              title="View Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            {user.deletedAt ? (
+                              <button
+                                onClick={() => unbanUser.mutate(user.id)}
+                                disabled={unbanUser.isPending}
+                                className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                title="Unban User"
+                              >
+                                <UserCheck className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  const reason = prompt("Reason for ban:");
+                                  if (reason)
+                                    banUser.mutate({ userId: user.id, reason });
+                                }}
+                                disabled={banUser.isPending}
+                                className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Ban User"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
-        />
-      </motion.div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex items-center justify-center gap-2 mt-6"
-        >
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-            className="btn-ghost p-2 rounded-xl disabled:opacity-50"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNum;
-            if (totalPages <= 5) {
-              pageNum = i + 1;
-            } else if (page <= 3) {
-              pageNum = i + 1;
-            } else if (page >= totalPages - 2) {
-              pageNum = totalPages - 4 + i;
-            } else {
-              pageNum = page - 2 + i;
-            }
-            const isActive = page === pageNum;
-            const className = `w-10 h-10 rounded-xl font-medium transition-all ${isActive ? "bg-primary-glow/20 text-primary-glow border border-primary-glow/30" : "text-text-secondary hover:text-text-primary hover:bg-surface-tertiary"}`;
-            return (
-              <button
-                key={pageNum}
-                onClick={() => setPage(pageNum)}
-                className={className}
-              >
-                {pageNum}
-              </button>
-            );
-          })}
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-            className="btn-ghost p-2 rounded-xl disabled:opacity-50"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </motion.div>
-      )}
+            {/* Pagination */}
+            {usersMeta && usersMeta.totalPages > 1 && (
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-slate-700 flex items-center justify-between">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {(page - 1) * limit + 1} to{" "}
+                  {Math.min(page * limit, usersMeta.total)} of {usersMeta.total}{" "}
+                  users
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1 || usersQuery.isFetching}
+                    className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() =>
+                      setPage((p) => Math.min(usersMeta!.totalPages, p + 1))
+                    }
+                    disabled={
+                      page === usersMeta.totalPages || usersQuery.isFetching
+                    }
+                    className="px-3 py-1 border border-gray-300 dark:border-slate-600 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

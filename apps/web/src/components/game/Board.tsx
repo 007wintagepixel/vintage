@@ -192,7 +192,17 @@ function isSafeCell(position: number): boolean {
   return SAFE_CELLS.includes(position);
 }
 
-export function Board({ tokens: _tokens }: { tokens: any[] }) {
+interface BoardTokenData {
+  id: number;
+  position: number;
+  color: "red" | "green" | "yellow" | "blue";
+  playerId: string;
+  isCurrentPlayer: boolean;
+  isLegalMove: boolean;
+  onClick: (tokenId: number) => void;
+}
+
+export function Board({ tokens: _tokens }: { tokens: BoardTokenData[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {

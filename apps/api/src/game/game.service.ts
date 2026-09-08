@@ -2,13 +2,14 @@
 // Game Service
 // ============================================
 
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Inject, forwardRef } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { v4 as uuidv4 } from "uuid";
 import * as argon2 from "argon2";
 
 import { PrismaService } from "../prisma/prisma.service";
 import { GameEngineService } from "./game-engine.service";
+import { GameGateway } from "./game.gateway";
 
 import type {
   GameState,
@@ -26,6 +27,8 @@ export class GameService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly gameEngine: GameEngineService,
+    @Inject(forwardRef(() => GameGateway))
+    private readonly gameGateway: GameGateway,
   ) {}
 
   // ============================================
@@ -252,8 +255,14 @@ export class GameService {
       data: { gameState: newGameState as any },
     });
 
-    // Emit event — the gateway handles broadcasting to the match room
-    // The GameGateway calls rollDice() then emits 'dice_rolled' to the match room
+    // Emit WebSocket event
+    this.gameGateway.emitToMatch(matchId, "dice_rolled", {
+      userId,
+      diceRoll,
+      legalMoves,
+      gameState: newGameState,
+    });
+
     this.logger.debug(`Dice rolled for match ${matchId}: ${diceRoll}`);
 
     return { diceRoll, legalMoves, gameState: newGameState };
@@ -334,8 +343,23 @@ export class GameService {
       },
     });
 
-    // Emit event — the gateway handles broadcasting to the match room
-    // The GameGateway calls moveToken() then emits 'token_moved' to the match room
+    // Emit WebSocket event for token moved
+    this.gameGateway.emitToMatch(matchId, "token_moved", {
+      userId,
+      move,
+      capturedTokens,
+      gameState: finalGameState,
+    });
+
+    // Check if game completed and emit game_completed event
+    if (finalGameState.status === "completed") {
+      this.gameGateway.emitToMatch(matchId, "game_completed", {
+        winner: finalGameState.winner,
+        rankings: finalGameState.rankings,
+        gameState: finalGameState,
+      });
+    }
+
     this.logger.debug(
       `Token moved in match ${matchId}: token ${tokenId} to position ${toPosition}`,
     );
@@ -372,6 +396,13 @@ export class GameService {
         winnerId,
         completedAt: new Date(),
       },
+    });
+
+    // Emit game_completed WebSocket event
+    this.gameGateway.emitToMatch(matchId, "game_completed", {
+      winner: winnerId,
+      rankings,
+      gameState,
     });
 
     // Update players and wallets

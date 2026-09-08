@@ -14,12 +14,30 @@ import {
   START_POSITIONS,
   DEFAULT_SAFE_CELLS,
 } from '../constants';
+import { getBotConfig, getConfigForDifficulty, type BotConfig } from './botConfig';
 
 // ============================================
 // EASY BOT - Mostly random legal moves
 // ============================================
 
 export class EasyBot {
+  private config: BotConfig;
+  private rng: () => number;
+
+  constructor(config?: BotConfig) {
+    this.config = config ?? getConfigForDifficulty('easy');
+    // Use seeded random if configured
+    if (this.config.randomSeed !== undefined) {
+      let seed = this.config.randomSeed;
+      this.rng = () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+      };
+    } else {
+      this.rng = Math.random;
+    }
+  }
+
   decide(gameState: GameState, playerIndex: number): BotDecision {
     const player = gameState.players[playerIndex];
     const legalMoves = getLegalMoves(gameState);
@@ -35,7 +53,8 @@ export class EasyBot {
     }
 
     // Pick a random legal move
-    const randomMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+    const randomIndex = Math.floor(this.rng() * legalMoves.length);
+    const randomMove = legalMoves[randomIndex];
     return { action: 'move', tokenId: randomMove.tokenId };
   }
 }
@@ -45,6 +64,23 @@ export class EasyBot {
 // ============================================
 
 export class MediumBot {
+  private config: BotConfig;
+  private rng: () => number;
+
+  constructor(config?: BotConfig) {
+    this.config = config ?? getConfigForDifficulty('medium');
+    // Use seeded random if configured
+    if (this.config.randomSeed !== undefined) {
+      let seed = this.config.randomSeed;
+      this.rng = () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+      };
+    } else {
+      this.rng = Math.random;
+    }
+  }
+
   decide(gameState: GameState, playerIndex: number): BotDecision {
     const player = gameState.players[playerIndex];
     const legalMoves = getLegalMoves(gameState);
@@ -57,6 +93,8 @@ export class MediumBot {
       return { action: 'roll' };
     }
 
+    const weights = this.config.weights.medium;
+
     // Score each legal move
     const scoredMoves = legalMoves.map((move) => {
       const token = player.tokens[move.tokenId];
@@ -64,40 +102,42 @@ export class MediumBot {
 
       // High priority: Move token out of home
       if (isInHome(token.position)) {
-        score += 100;
+        score += weights.exitHome;
       }
 
       // High priority: Enter home lane / finish
       if (isInHomeLane(move.toPosition)) {
-        score += 80;
+        score += weights.enterHomeLane;
       }
       if (isFinished(move.toPosition)) {
-        score += 150;
+        score += weights.finishToken;
       }
 
       // Priority: Capture opponent
       const captures = this.countCapturesAtPosition(gameState, player.userId, move.toPosition);
       if (captures > 0) {
-        score += 90 * captures;
+        score += weights.capture * captures;
       }
 
       // Priority: Land on safe cell
       if (isSafeCell(move.toPosition, gameState.rules.safeCells)) {
-        score += 30;
+        score += weights.safeCell;
       }
 
       // Avoid: Move to position where we can be captured next turn
       const dangerScore = this.calculateDanger(gameState, player, move.toPosition);
-      score -= dangerScore * 20;
+      score -= dangerScore * weights.avoidDanger;
 
       // Priority: Advance tokens that are farthest behind
       const relativePos = isInHome(token.position) ? -1 : getRelativePosition(player.color, token.position);
       if (relativePos >= 0 && relativePos < 20) {
-        score += 10; // Help lagging tokens
+        score += weights.helpLagging; // Help lagging tokens
       }
 
       // Small random factor to avoid predictability
-      score += Math.random() * 5;
+      if (this.config.enableRandomness) {
+        score += this.rng() * weights.randomFactor;
+      }
 
       return { ...move, score };
     });
@@ -174,18 +214,22 @@ export class MediumBot {
 // ============================================
 
 export class HardBot {
-  private weights = {
-    exitHome: 200,
-    enterHomeLane: 150,
-    finishToken: 300,
-    capture: 250,
-    safeCell: 50,
-    avoidDanger: 80,
-    blockOpponent: 100,
-    advanceLeading: 30,
-    helpLagging: 40,
-    extraTurnValue: 120,
-  };
+  private config: BotConfig;
+  private rng: () => number;
+
+  constructor(config?: BotConfig) {
+    this.config = config ?? getConfigForDifficulty('hard');
+    // Use seeded random if configured
+    if (this.config.randomSeed !== undefined) {
+      let seed = this.config.randomSeed;
+      this.rng = () => {
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        return seed / 4294967296;
+      };
+    } else {
+      this.rng = Math.random;
+    }
+  }
 
   decide(gameState: GameState, playerIndex: number): BotDecision {
     const player = gameState.players[playerIndex];
@@ -199,10 +243,12 @@ export class HardBot {
       return { action: 'roll' };
     }
 
+    const weights = this.config.weights.hard;
+
     // Evaluate each move with full game state analysis
     const evaluatedMoves = legalMoves.map((move) => {
       const token = player.tokens[move.tokenId];
-      const evaluation = this.evaluateMove(gameState, player, token, move);
+      const evaluation = this.evaluateMove(gameState, player, token, move, weights);
       return { ...move, evaluation };
     });
 
@@ -215,52 +261,53 @@ export class HardBot {
     gameState: GameState,
     player: PlayerState,
     token: TokenState,
-    move: { tokenId: number; fromPosition: number; toPosition: number }
+    move: { tokenId: number; fromPosition: number; toPosition: number },
+    weights: BotConfig['weights']['hard']
   ): number {
     let score = 0;
     const { toPosition } = move;
 
     // 1. Exit home - critical priority
     if (isInHome(token.position)) {
-      score += this.weights.exitHome;
+      score += weights.exitHome;
     }
 
     // 2. Enter home lane / finish
     if (isInHomeLane(toPosition)) {
-      score += this.weights.enterHomeLane;
+      score += weights.enterHomeLane;
       // Closer to finish = better
       score += (toPosition - 52) * 20;
     }
     if (isFinished(toPosition)) {
-      score += this.weights.finishToken;
+      score += weights.finishToken;
     }
 
     // 3. Capture evaluation
     const captures = this.analyzeCaptures(gameState, player.userId, toPosition);
-    score += captures.immediate * this.weights.capture;
-    score += captures.strategic * (this.weights.capture * 0.5);
+    score += captures.immediate * weights.capture;
+    score += captures.strategic * (weights.capture * 0.5);
 
     // 4. Safe cell bonus
     if (isSafeCell(toPosition, gameState.rules.safeCells)) {
-      score += this.weights.safeCell;
+      score += weights.safeCell;
     }
 
     // 5. Danger assessment
     const danger = this.assessDanger(gameState, player, toPosition);
-    score -= danger * this.weights.avoidDanger;
+    score -= danger * weights.avoidDanger;
 
     // 6. Blocking opponents (positioning to threaten)
     const blockValue = this.calculateBlockingValue(gameState, player, toPosition);
-    score += blockValue * this.weights.blockOpponent;
+    score += blockValue * weights.blockOpponent;
 
     // 7. Token progression strategy
-    const progression = this.evaluateProgression(gameState, player, token, toPosition);
+    const progression = this.evaluateProgression(gameState, player, token, toPosition, weights);
     score += progression;
 
     // 8. Extra turn potential
     const diceValue = gameState.diceRoll?.value ?? 0;
     const extraTurnChance = this.calculateExtraTurnChance(gameState, player, toPosition, diceValue);
-    score += extraTurnChance * this.weights.extraTurnValue;
+    score += extraTurnChance * weights.extraTurnValue;
 
     return score;
   }
@@ -358,7 +405,8 @@ export class HardBot {
     gameState: GameState,
     player: PlayerState,
     token: TokenState,
-    toPosition: number
+    toPosition: number,
+    weights: BotConfig['weights']['hard']
   ): number {
     const finishedCount = player.tokens.filter((t) => t.isFinished).length;
     const homeLaneCount = player.tokens.filter((t) => isInHomeLane(t.position)).length;
@@ -375,14 +423,14 @@ export class HardBot {
     if (finishedCount < 2) {
       const relativePos = isInHome(token.position) ? -1 : getRelativePosition(player.color, token.position);
       if (relativePos >= 0 && relativePos < 20) {
-        score += this.weights.helpLagging;
+        score += weights.helpLagging;
       }
     }
 
     // Late game: Race to finish
     if (finishedCount >= 2) {
       if (isInHomeLane(toPosition) || isFinished(toPosition)) {
-        score += this.weights.advanceLeading * 2;
+        score += weights.advanceLeading * 2;
       }
     }
 
@@ -436,16 +484,16 @@ export class HardBot {
 
 export type BotDifficulty = 'easy' | 'medium' | 'hard';
 
-export function createBot(difficulty: BotDifficulty): EasyBot | MediumBot | HardBot {
+export function createBot(difficulty: BotDifficulty, config?: BotConfig): EasyBot | MediumBot | HardBot {
   switch (difficulty) {
     case 'easy':
-      return new EasyBot();
+      return new EasyBot(config);
     case 'medium':
-      return new MediumBot();
+      return new MediumBot(config);
     case 'hard':
-      return new HardBot();
+      return new HardBot(config);
     default:
-      return new MediumBot();
+      return new MediumBot(config);
   }
 }
 

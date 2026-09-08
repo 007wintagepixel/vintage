@@ -144,13 +144,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.idempotencyKey,
       );
 
-      // Broadcast to match room
-      this.server.to(`match:${data.matchId}`).emit("dice_rolled", {
-        userId,
-        diceRoll: result.diceRoll,
-        legalMoves: result.legalMoves,
-        gameState: result.gameState,
-      });
+      // Event emission is now handled by GameService via this.gameGateway.emitToMatch
+      // No need to emit here to avoid duplicate events
 
       return { success: true };
     } catch (error) {
@@ -183,22 +178,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.idempotencyKey,
       );
 
-      // Broadcast to match room
-      this.server.to(`match:${data.matchId}`).emit("token_moved", {
-        userId,
-        move: result.move,
-        capturedTokens: result.capturedTokens,
-        gameState: result.gameState,
-      });
-
-      // Check if game completed
-      if (result.gameState.status === "completed") {
-        this.server.to(`match:${data.matchId}`).emit("game_completed", {
-          winner: result.gameState.winner,
-          rankings: result.gameState.rankings,
-          gameState: result.gameState,
-        });
-      }
+      // Event emission is now handled by GameService via this.gameGateway.emitToMatch
+      // No need to emit here to avoid duplicate events
 
       return { success: true };
     } catch (error) {

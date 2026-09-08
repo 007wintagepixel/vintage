@@ -84,7 +84,7 @@ export interface GameState {
   currentPlayerIndex: number;
   diceRoll?: DiceRoll;
   legalMoves: LegalMove[];
-  moveHistory: any[];
+  moveHistory: Move[];
   stateVersion: number;
   status: MatchStatus;
   winner?: string | null;
@@ -173,6 +173,8 @@ export interface UseGameSocketReturn {
   isConnected: boolean;
   connectionStatus: ConnectionStatus;
   reconnectionAttempt: number;
+  maxReconnectAttempts: number;
+  lastSyncTime: Date | null;
 
   // Game state
   gameState: GameState | null;
@@ -218,6 +220,8 @@ export interface GameSocketEventHandlers {
   onError?: (error: GameErrorEvent) => void;
   onChatMessage?: (data: ChatMessageEvent) => void;
   onGameState?: (state: GameState) => void;
+  onSyncComplete?: () => void;
+  onSyncStart?: () => void;
 }
 
 // ============================================
@@ -244,6 +248,7 @@ export function useGameSocket(
   const socketRef = useRef<Socket | null>(null);
   const maxReconnectAttempts = 5;
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   // Computed values
   const myPlayerIndex =
@@ -322,6 +327,7 @@ export function useGameSocket(
       setIsConnected(true);
       setConnectionStatus("syncing");
       setReconnectionAttempt(0);
+      handlers.onSyncStart?.();
       newSocket.emit("join_match", { matchId });
     });
 
@@ -330,6 +336,8 @@ export function useGameSocket(
       setGameState(state);
       const me = state.players.find((p) => p.userId === userId);
       if (me) setMyColor(me.color);
+      setLastSyncTime(new Date());
+      handlers.onSyncComplete?.();
       handlers.onGameState?.(state);
     });
 
@@ -492,6 +500,8 @@ export function useGameSocket(
     isConnected,
     connectionStatus,
     reconnectionAttempt,
+    maxReconnectAttempts,
+    lastSyncTime,
 
     // Game state
     gameState,

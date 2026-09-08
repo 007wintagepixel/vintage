@@ -1,10 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -22,31 +18,13 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
-      "@ludo-nexus/shared-types": [
-        "../../packages/shared-types/src"
-      ],
-      "@ludo-nexus/ui": [
-        "../../packages/ui/src"
-      ],
-      "@ludo-nexus/validation": [
-        "../../packages/validation/src"
-      ],
-      "@ludo-nexus/api-client": [
-        "../../packages/api-client/src"
-      ]
+      "@/*": ["./src/*"],
+      "@ludo-nexus/shared-types": ["../../packages/shared-types/src"],
+      "@ludo-nexus/api-client": ["../../packages/api-client/src"],
+      "@ludo-nexus/ui": ["../../packages/ui/src"]
     },
     "target": "ES2017"
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

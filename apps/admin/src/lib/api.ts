@@ -2,27 +2,28 @@
 // Admin API Client
 // ============================================
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 async function fetchAdmin<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
-  const token = typeof window !== 'undefined' 
-    ? localStorage.getItem('admin_token') 
-    : '';
-  
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("admin_token") : "";
+
   const response = await fetch(`${API_BASE}/admin${endpoint}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     },
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    const error = await response
+      .json()
+      .catch(() => ({ message: "Request failed" }));
     throw new Error(error.message || `HTTP ${response.status}`);
   }
 
@@ -31,7 +32,7 @@ async function fetchAdmin<T>(
 
 // Dashboard
 export async function getDashboardStats() {
-  return fetchAdmin('/dashboard');
+  return fetchAdmin("/dashboard");
 }
 
 // Users
@@ -45,12 +46,12 @@ export interface UserFilters {
 
 export async function getUsers(filters: UserFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.search) params.set('search', filters.search);
-  if (filters.kycStatus) params.set('kycStatus', filters.kycStatus);
-  if (filters.status) params.set('status', filters.status);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.search) params.set("search", filters.search);
+  if (filters.kycStatus) params.set("kycStatus", filters.kycStatus);
+  if (filters.status) params.set("status", filters.status);
+
   return fetchAdmin(`/users?${params.toString()}`);
 }
 
@@ -60,14 +61,14 @@ export async function getUserById(userId: string) {
 
 export async function banUser(userId: string, reason: string) {
   return fetchAdmin(`/users/${userId}/ban`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ reason }),
   });
 }
 
 export async function unbanUser(userId: string) {
   return fetchAdmin(`/users/${userId}/unban`, {
-    method: 'POST',
+    method: "POST",
   });
 }
 
@@ -84,14 +85,14 @@ export interface MatchFilters {
 
 export async function getMatches(filters: MatchFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.status) params.set('status', filters.status);
-  if (filters.mode) params.set('mode', filters.mode);
-  if (filters.userId) params.set('userId', filters.userId);
-  if (filters.fromDate) params.set('fromDate', filters.fromDate);
-  if (filters.toDate) params.set('toDate', filters.toDate);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.status) params.set("status", filters.status);
+  if (filters.mode) params.set("mode", filters.mode);
+  if (filters.userId) params.set("userId", filters.userId);
+  if (filters.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters.toDate) params.set("toDate", filters.toDate);
+
   return fetchAdmin(`/matches?${params.toString()}`);
 }
 
@@ -108,16 +109,16 @@ export interface TournamentFilters {
 
 export async function getTournaments(filters: TournamentFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.status) params.set('status', filters.status);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.status) params.set("status", filters.status);
+
   return fetchAdmin(`/tournaments?${params.toString()}`);
 }
 
-export async function createTournament(data: any) {
-  return fetchAdmin('/tournaments', {
-    method: 'POST',
+export async function createTournament(data: Record<string, unknown>) {
+  return fetchAdmin("/tournaments", {
+    method: "POST",
     body: JSON.stringify(data),
   });
 }
@@ -135,14 +136,14 @@ export interface TransactionFilters {
 
 export async function getTransactions(filters: TransactionFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.type) params.set('type', filters.type);
-  if (filters.status) params.set('status', filters.status);
-  if (filters.userId) params.set('userId', filters.userId);
-  if (filters.fromDate) params.set('fromDate', filters.fromDate);
-  if (filters.toDate) params.set('toDate', filters.toDate);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.type) params.set("type", filters.type);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.userId) params.set("userId", filters.userId);
+  if (filters.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters.toDate) params.set("toDate", filters.toDate);
+
   return fetchAdmin(`/transactions?${params.toString()}`);
 }
 
@@ -155,22 +156,22 @@ export interface WithdrawalFilters {
 
 export async function getWithdrawals(filters: WithdrawalFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.status) params.set('status', filters.status);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.status) params.set("status", filters.status);
+
   return fetchAdmin(`/withdrawals?${params.toString()}`);
 }
 
 export async function approveWithdrawal(withdrawalId: string) {
   return fetchAdmin(`/withdrawals/${withdrawalId}/approve`, {
-    method: 'POST',
+    method: "POST",
   });
 }
 
 export async function rejectWithdrawal(withdrawalId: string, reason: string) {
   return fetchAdmin(`/withdrawals/${withdrawalId}/reject`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ reason }),
   });
 }
@@ -182,18 +183,18 @@ export async function getPendingKYC(page = 1, limit = 20) {
 
 export async function reviewKYC(
   kycId: string,
-  action: 'approve' | 'reject',
-  rejectionReason?: string
+  action: "approve" | "reject",
+  rejectionReason?: string,
 ) {
   return fetchAdmin(`/kyc/${kycId}/review`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ action, rejectionReason }),
   });
 }
 
 export async function requestAdditionalInfo(kycId: string, message: string) {
   return fetchAdmin(`/kyc/${kycId}/additional-info`, {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify({ message }),
   });
 }
@@ -209,21 +210,21 @@ export interface FraudAlertFilters {
 
 export async function getFraudAlerts(filters: FraudAlertFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.status) params.set('status', filters.status);
-  if (filters.severity) params.set('severity', filters.severity);
-  if (filters.type) params.set('type', filters.type);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.status) params.set("status", filters.status);
+  if (filters.severity) params.set("severity", filters.severity);
+  if (filters.type) params.set("type", filters.type);
+
   return fetchAdmin(`/fraud-alerts?${params.toString()}`);
 }
 
 export async function updateFraudAlert(
   alertId: string,
-  data: { status?: string; assignedToId?: string }
+  data: { status?: string; assignedToId?: string },
 ) {
   return fetchAdmin(`/fraud-alerts/${alertId}`, {
-    method: 'PUT',
+    method: "PUT",
     body: JSON.stringify(data),
   });
 }
@@ -231,13 +232,15 @@ export async function updateFraudAlert(
 // Settings
 export async function getGameSettings(category?: string) {
   const params = new URLSearchParams();
-  if (category) params.set('category', category);
+  if (category) params.set("category", category);
   return fetchAdmin(`/settings?${params.toString()}`);
 }
 
-export async function updateGameSettings(settings: Array<{ key: string; value: any }>) {
-  return fetchAdmin('/settings', {
-    method: 'PUT',
+export async function updateGameSettings(
+  settings: Array<{ key: string; value: unknown }>,
+) {
+  return fetchAdmin("/settings", {
+    method: "PUT",
     body: JSON.stringify({ settings }),
   });
 }
@@ -252,10 +255,10 @@ export interface AuditLogFilters {
 
 export async function getAuditLogs(filters: AuditLogFilters = {}) {
   const params = new URLSearchParams();
-  if (filters.page) params.set('page', filters.page.toString());
-  if (filters.limit) params.set('limit', filters.limit.toString());
-  if (filters.adminId) params.set('adminId', filters.adminId);
-  if (filters.action) params.set('action', filters.action);
-  
+  if (filters.page) params.set("page", filters.page.toString());
+  if (filters.limit) params.set("limit", filters.limit.toString());
+  if (filters.adminId) params.set("adminId", filters.adminId);
+  if (filters.action) params.set("action", filters.action);
+
   return fetchAdmin(`/audit-logs?${params.toString()}`);
 }

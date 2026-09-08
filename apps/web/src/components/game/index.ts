@@ -8,3 +8,4 @@ export { Chat } from "./Chat";
 export { GameOver } from "./GameOver";
 export { GameErrorBoundary } from "./ErrorBoundary";
 export { GameHeader } from "./GameHeader";
+export { ReconnectionIndicator } from "./ReconnectionIndicator";
