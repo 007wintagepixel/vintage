@@ -3,6 +3,5 @@
   "installCommand": "npm install -g pnpm@9 && pnpm install --frozen-lockfile",
   "buildCommand": "pnpm build:web",
   "framework": "nextjs",
-  "regions": ["bom1"],
-  "rootDirectory": "apps/web"
+  "regions": ["bom1"]
 }
