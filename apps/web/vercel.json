@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build --workspace=@ludo-nexus/web",
-  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm install -g pnpm@9 && pnpm install --registry=https://registry.npmjs.org && pnpm build:web",
+  "installCommand": "npm install -g pnpm@9 && pnpm install --registry=https://registry.npmjs.org",
   "framework": "nextjs",
   "regions": ["bom1"]
 }
