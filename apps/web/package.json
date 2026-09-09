@@ -43,6 +43,7 @@
     "@ludo-nexus/shared-types": "file:../shared-types",
     "@ludo-nexus/ui": "file:../ui",
     "@ludo-nexus/validation": "file:../validation",
+    "@tailwindcss/postcss": "^4.3.3",
     "@tanstack/react-query": "^5.24.0",
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
@@ -75,7 +76,7 @@
     "postcss-nested": "^6.0.1",
     "prettier": "^3.2.5",
     "prettier-plugin-tailwindcss": "^0.5.11",
-    "tailwindcss": "^3.4.1",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.3.3",
     "vitest": "^2.0.0"
   }
